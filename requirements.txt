@@ -1,0 +1,5 @@
+Librosa
+Numpy
+Soundfile
+Scikit-learn
+PyAudio
