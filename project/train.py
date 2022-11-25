@@ -8,7 +8,7 @@ from cnn import CNNNetwork
 
 
 BATCH_SIZE = 128
-EPOCHS = 10
+EPOCHS = 100
 LEARNING_RATE = 0.001
 
 ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
