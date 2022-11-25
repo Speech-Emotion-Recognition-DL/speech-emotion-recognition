@@ -146,7 +146,7 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[0]
+    signal, label = usd[4]
 
     a = 1
 
