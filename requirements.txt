@@ -3,3 +3,6 @@ Numpy
 Soundfile
 Scikit-learn
 PyAudio
+
+pandas
+torchaudio

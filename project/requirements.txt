@@ -1,0 +1,12 @@
+Numpy
+Soundfile
+pandas
+torchaudio
+
+Soundfile:
+conda install
+To install this package run one of the following:
+conda install -c conda-forge pysoundfile
+conda install -c "conda-forge/label/cf201901" pysoundfile
+conda install -c "conda-forge/label/cf202003" pysoundfile
+conda install -c "conda-forge/label/gcc7" pysoundfile
