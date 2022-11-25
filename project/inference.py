@@ -44,7 +44,6 @@ if __name__ == "__main__":
     cnn = CNNNetwork()
     # cnn = cnn.to('cuda')
     state_dict = torch.load("feedforwardnet.pth")
-    # state_dict= torch.load("cnnnet.pth")
     cnn.load_state_dict(state_dict)
 
     # load the dataset
@@ -62,10 +61,13 @@ if __name__ == "__main__":
                        "cpu")
 
     # get a sample from the dataset for inference
-    input, target = usd[0][0], usd[0][1]  # [batch size, num_channels, fr, time]
-    input.unsqueeze_(0)
+    print("---------result------------")
+    for i in range(52):
+        input, target = usd[i][0], usd[i][1]  # [batch size, num_channels, fr, time]
+        input.unsqueeze_(0)
 
-    # make an inference
-    predicted, expected = predict(cnn, input, target,
-                                  class_mapping)
-    print(f"Predicted: '{predicted}', expected: '{expected}'")
+        # make an inference
+        predicted, expected = predict(cnn, input, target,
+                                      class_mapping)
+        print(f"Predicted {i}:  '{predicted}', expected: '{expected}'")
+        print("\n -------------------------------------------------- \n")
