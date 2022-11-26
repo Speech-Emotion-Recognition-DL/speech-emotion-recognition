@@ -1,9 +1,11 @@
 import os
-
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
 import torchaudio
+
+import matplotlib
+import matplotlib.pyplot as plt
 
 int2emotion = {
     "01": "neutral",
@@ -21,11 +23,13 @@ class SoundDataset(Dataset):
 
     def __init__(self,
                  annotations_file,
+                 model,
                  transformation,
                  target_sample_rate,
                  num_samples,
                  device):
         self.annotations = pd.read_csv(annotations_file)
+        self.model = model
         self.device = device
         self.transformation = transformation.to(self.device)
         self.target_sample_rate = target_sample_rate
@@ -68,8 +72,33 @@ class SoundDataset(Dataset):
         signal = self._cut_if_necessary(signal)
         signal = self._right_pad_if_necessary(signal)
 
+        #features = self.get_features(signal)
+
+        # fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
+        # for i, feats in enumerate(features):
+        #     ax[i].imshow(feats[0].cpu())
+        #     ax[i].set_title(f"Feature from transformer layer {i + 1}")
+        #     ax[i].set_xlabel("Feature dimension")
+        #     ax[i].set_ylabel("Frame (time-axis)")
+        # plt.tight_layout()
+        # plt.show()
+
+        # with torch.inference_mode():
+        #     emission, _ = self.model(signal)
+        #
+        # plt.imshow(emission[0].cpu().T)
+        # plt.title("Classification result")
+        # plt.xlabel("Frame (time-axis)")
+        # plt.ylabel("Class")
+        # plt.show()
+        # print("Class labels:", bundle.get_labels())
+        #
+
         signal = self.transformation(signal)
         return signal, label
+      #  return emission, label
+
+
 
     def _cut_if_necessary(self, signal):
         if signal.shape[1] > self.num_samples:
@@ -119,10 +148,22 @@ class SoundDataset(Dataset):
         label = self.annotations.iloc[index, 3]
         return label
 
+    def get_features(self, signal):
+        with torch.inference_mode():
+            features, _ = self.model.extract_features(signal)
+        return features
+
 
 if __name__ == "__main__":
+
+    bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+
+    print("Sample Rate:", bundle.sample_rate)
+
     ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
-    SAMPLE_RATE = 16000
+
+    # SAMPLE_RATE = 16000
+    SAMPLE_RATE = bundle.sample_rate
     NUM_SAMPLES = 22050
 
     if torch.cuda.is_available():
@@ -130,6 +171,9 @@ if __name__ == "__main__":
     else:
         device = "cpu"
     print(f"Using device {device}")
+
+    model = bundle.get_model().to(device)
+    # print(model.__class__)
 
     # transformer
     mel_spectrogram = torchaudio.transforms.MelSpectrogram(
@@ -140,15 +184,13 @@ if __name__ == "__main__":
     )
 
     usd = SoundDataset(ANNOTATIONS_FILE,
+                       model,
                        mel_spectrogram,
                        SAMPLE_RATE,
                        NUM_SAMPLES,
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[4]
+    signal, label = usd[1]
 
     a = 1
-
-    # p = pd.read_csv("C:/Users/97252/PycharmProjects/pyTorch/project/Test_tess_ravdess.csv")
-    # print(p)

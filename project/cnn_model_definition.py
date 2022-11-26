@@ -3,9 +3,9 @@ The code is based on : https://github.com/a-nagrani/VGGVox/issues/1
 ******************************************************************"""
 
 from torch import nn
-# import constants as c
+import constants as c
 import torch
-
+from torchsummary import summary
 DROP_OUT = 0.5
 DIMENSION = 512 * 300
 
@@ -19,7 +19,11 @@ class Convolutional_Speaker_Identification(nn.Module):
 
         super().__init__()
 
-        self.conv_2d_1 = nn.Conv2d(1, 96, kernel_size=(7, 7), stride=(2, 2), padding=1)
+        self.conv_2d_1 = nn.Conv2d(in_channels=1,
+                                   out_channels=96,
+                                   kernel_size=(7, 7),
+                                   stride=(2, 2),
+                                   padding=1)
         self.bn_1 = nn.BatchNorm2d(96)
         self.max_pool_2d_1 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2))
 
@@ -44,7 +48,8 @@ class Convolutional_Speaker_Identification(nn.Module):
         self.dense_1 = nn.Linear(4096, 1024)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
-        self.dense_2 = nn.Linear(1024, c.NUM_OF_SPEAKERS)
+        self.dense_2 = nn.Linear(1024, 8)
+
 
     def forward(self, X):
 
@@ -90,4 +95,9 @@ class Convolutional_Speaker_Identification(nn.Module):
 
     def to_string(self):
         return "Convolutional_Speaker_Identification_Log_Softmax_Model-epoch_"
+
+if __name__ == "__main__":
+    cnn = Convolutional_Speaker_Identification()
+    # summary(cnn, (1, 64, 44))
+    summary(cnn.cuda(), (1, 68, 29))
 

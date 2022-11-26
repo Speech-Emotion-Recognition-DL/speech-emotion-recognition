@@ -53,8 +53,16 @@ if __name__ == "__main__":
         hop_length=512,
         n_mels=64
     )
+    if torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+    print(f"Using {device}")
 
+    bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+    model_wev2vec = bundle.get_model().to(device)
     usd = SoundDataset(ANNOTATIONS_FILE,
+                       model_wev2vec,
                        mel_spectrogram,
                        SAMPLE_RATE,
                        NUM_SAMPLES,
@@ -62,8 +70,10 @@ if __name__ == "__main__":
 
     # get a sample from the dataset for inference
     print("---------result------------")
+
     for i in range(52):
-        input, target = usd[i][0], usd[i][1]  # [batch size, num_channels, fr, time]
+        input = usd[i][0]
+        target = usd[i][1]  # [batch size, num_channels, fr, time]
         input.unsqueeze_(0)
 
         # make an inference

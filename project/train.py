@@ -5,10 +5,12 @@ from torch.utils.data import DataLoader
 
 from myDataset import SoundDataset
 from cnn import CNNNetwork
+from project.cnn_model_definition import Convolutional_Speaker_Identification
 
-
+"""
+Batch size is a term used in machine learning and refers to the number of training examples utilized in one iteration"""
 BATCH_SIZE = 128
-EPOCHS = 100
+EPOCHS = 10
 LEARNING_RATE = 0.001
 
 ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
@@ -39,7 +41,7 @@ def train_single_epoch(model, data_loader, loss_fn, optimiser, device):
 
 def train(model, data_loader, loss_fn, optimiser, device, epochs):
     for i in range(epochs):
-        print(f"Epoch {i+1}")
+        print(f"Epoch {i + 1}")
         train_single_epoch(model, data_loader, loss_fn, optimiser, device)
         print("---------------------------")
     print("Finished training")
@@ -59,17 +61,20 @@ if __name__ == "__main__":
         hop_length=512,
         n_mels=64
     )
-
+    bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+    model_wev2vec = bundle.get_model().to(device)
     usd = SoundDataset(ANNOTATIONS_FILE,
-                            mel_spectrogram,
-                            SAMPLE_RATE,
-                            NUM_SAMPLES,
-                            device)
+                       model_wev2vec,
+                       mel_spectrogram,
+                       SAMPLE_RATE,
+                       NUM_SAMPLES,
+                       device)
 
     train_dataloader = create_data_loader(usd, BATCH_SIZE)
 
     # construct model and assign it to device
     cnn = CNNNetwork().to(device)
+   # cnn = Convolutional_Speaker_Identification()
     print(cnn)
 
     # initialise loss funtion + optimiser
@@ -78,7 +83,7 @@ if __name__ == "__main__":
                                  lr=LEARNING_RATE)
 
     # train model
-    train(cnn, train_dataloader, loss_fn, optimiser, device, EPOCHS)
+    train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
 
     # save model
     torch.save(cnn.state_dict(), "feedforwardnet.pth")
