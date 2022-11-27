@@ -34,6 +34,9 @@ def predict(model, input, target, class_mapping):
         predictions = model(input)
         # Tensor (1, 10) -> [ [0.1, 0.01, ..., 0.6] ]
         predicted_index = predictions[0].argmax(0)
+        if predicted_index == 8:
+            predicted_index = 7
+
         predicted = class_mapping[predicted_index]
         expected = class_mapping[target]
     return predicted, expected
@@ -70,8 +73,19 @@ if __name__ == "__main__":
 
     # get a sample from the dataset for inference
     print("---------result------------")
+    #
+    # input = usd[0][0]
+    # target = usd[0][1]  # [batch size, num_channels, fr, time]
+    # input.unsqueeze_(0)
+    #
+    # # make an inference
+    # predicted, expected = predict(cnn, input, target,
+    #                               class_mapping)
+    # print(f"Predicted :  '{predicted}', expected: '{expected}'")
+    # print("\n -------------------------------------------------- \n")
 
-    for i in range(52):
+
+    for i in range(50):
         input = usd[i][0]
         target = usd[i][1]  # [batch size, num_channels, fr, time]
         input.unsqueeze_(0)

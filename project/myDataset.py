@@ -72,8 +72,8 @@ class SoundDataset(Dataset):
         signal = self._cut_if_necessary(signal)
         signal = self._right_pad_if_necessary(signal)
 
-        #features = self.get_features(signal)
-
+        # features = self.get_features(signal)
+        #
         # fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
         # for i, feats in enumerate(features):
         #     ax[i].imshow(feats[0].cpu())
@@ -83,20 +83,20 @@ class SoundDataset(Dataset):
         # plt.tight_layout()
         # plt.show()
 
-        # with torch.inference_mode():
-        #     emission, _ = self.model(signal)
-        #
+        with torch.inference_mode():
+            emission, _ = self.model(signal)
+
         # plt.imshow(emission[0].cpu().T)
         # plt.title("Classification result")
         # plt.xlabel("Frame (time-axis)")
         # plt.ylabel("Class")
         # plt.show()
         # print("Class labels:", bundle.get_labels())
-        #
+
 
         signal = self.transformation(signal)
-        return signal, label
-      #  return emission, label
+       # return signal, label
+        return emission, label
 
 
 
@@ -191,6 +191,6 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[1]
+    signal, label = usd[479]
 
     a = 1

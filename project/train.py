@@ -10,7 +10,7 @@ from project.cnn_model_definition import Convolutional_Speaker_Identification
 """
 Batch size is a term used in machine learning and refers to the number of training examples utilized in one iteration"""
 BATCH_SIZE = 128
-EPOCHS = 10
+EPOCHS = 100
 LEARNING_RATE = 0.001
 
 ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
@@ -70,6 +70,8 @@ if __name__ == "__main__":
                        NUM_SAMPLES,
                        device)
 
+
+    print(usd.__getitem__(0))
     train_dataloader = create_data_loader(usd, BATCH_SIZE)
 
     # construct model and assign it to device
