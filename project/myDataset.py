@@ -53,7 +53,7 @@ class SoundDataset(Dataset):
         signal - the waveform
         sample rate - time series of the audio file
         """
-        # Todo change the transformer to wev2vec
+        # Todo change the transformer to wav2vec
         # Todo what is the best number of sample rate and num of sample
 
         # Loads an audio file at a particular index within the dataset
@@ -93,12 +93,9 @@ class SoundDataset(Dataset):
         # plt.show()
         # print("Class labels:", bundle.get_labels())
 
-
         signal = self.transformation(signal)
-       # return signal, label
+        # return signal, label
         return emission, label
-
-
 
     def _cut_if_necessary(self, signal):
         if signal.shape[1] > self.num_samples:
@@ -135,23 +132,27 @@ class SoundDataset(Dataset):
         return signal
 
     def _get_audio_sample_path(self, index):
+       """
         # getting the value of the cell from the csv file
         # row is the index
         # column is 1
-        path = self.annotations.iloc[index, 1]
-        return path
+       """
+       path = self.annotations.iloc[index, 1]
+       return path
 
     def _get_audio_sample_label(self, index):
-        # getting the value of the cell from the csv file
-        # row is the index
-        # column is 1
+        """
+         # getting the value of the cell from the csv file
+         # row is the index
+         # column is 1"
+        """
         label = self.annotations.iloc[index, 3]
         return label
 
     def get_features(self, signal):
         with torch.inference_mode():
             features, _ = self.model.extract_features(signal)
-        return features
+            return features
 
 
 if __name__ == "__main__":

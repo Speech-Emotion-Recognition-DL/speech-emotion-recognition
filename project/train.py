@@ -19,11 +19,25 @@ NUM_SAMPLES = 22050
 
 
 def create_data_loader(train_data, batch_size):
+    """
+    Data loader is a class that we can use to wrap a data set in our case te train data
+    and it will allow us to fetch data to load data in batches
+
+    so it allow us to load data sets that are heavy on the memory without having any issues
+
+    """
     train_dataloader = DataLoader(train_data, batch_size=batch_size)
     return train_dataloader
 
 
 def train_single_epoch(model, data_loader, loss_fn, optimiser, device):
+
+    """
+    Loop through all the samples in the dataset and at each iteration we'll get a new batch of samples
+    and this where the data loader comes in very handy because its an issue ball which will return us both the input and
+    the target or in other word the x's and y's for one batch at each iteration`
+
+    """
     for input, target in data_loader:
         input, target = input.to(device), target.to(device)
 
@@ -70,14 +84,15 @@ if __name__ == "__main__":
                        NUM_SAMPLES,
                        device)
 
-
     print(usd.__getitem__(0))
-    train_dataloader = create_data_loader(usd, BATCH_SIZE)
+    # train_dataloader = create_data_loader(usd, BATCH_SIZE)
+    train_dataloader = create_data_loader(usd, 16)
 
     # construct model and assign it to device
     cnn = CNNNetwork().to(device)
-   # cnn = Convolutional_Speaker_Identification()
-    print(cnn)
+    # cnn = Convolutional_Speaker_Identification().to(device)
+
+    #print(cnn)
 
     # initialise loss funtion + optimiser
     loss_fn = nn.CrossEntropyLoss()
