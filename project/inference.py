@@ -37,7 +37,7 @@ in pair with model.eval() to turn off gradients computation:"""
 
 
 def predict(model, input, target, class_mapping):
-    model.eval()  #
+    model.eval()
     with torch.no_grad():
         predictions = model(input)
         # Tensor (the number of sample that we are passing to the model = 1, the number of classes that the modle tries to predict = 10)
@@ -45,8 +45,8 @@ def predict(model, input, target, class_mapping):
         # We are interested in the index that has the highest value.
         # So that index will correspond to the class that we want to predict.
         predicted_index = predictions[0].argmax(0)
-        if predicted_index == 8:
-            predicted_index = 7
+        # if predicted_index == 8:
+        #     predicted_index = 7
 
         predicted = class_mapping[predicted_index]
         expected = class_mapping[target]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         device = "cpu"
     print(f"Using {device}")
 
-    bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+    bundle = torchaudio.pipelines.WAV2VEC2_BASE
     model_wev2vec = bundle.get_model().to(device)
     usd = SoundDataset(ANNOTATIONS_FILE,
                        model_wev2vec,
@@ -85,8 +85,8 @@ if __name__ == "__main__":
                        "cpu")
 
     # get a sample from the dataset for inference
-    input = usd[0][0]
-    target = usd[0][1]  # [batch size, num_channels, fr, time]
+    input = usd[1][0]
+    target = usd[1][1]  # [batch size, num_channels, fr, time]
     input.unsqueeze_(0)
 
     # make an inference

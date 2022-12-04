@@ -72,7 +72,7 @@ class SoundDataset(Dataset):
         signal = self._cut_if_necessary(signal)
         signal = self._right_pad_if_necessary(signal)
 
-        # features = self.get_features(signal)
+        features = self.get_features(signal)
         #
         # fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
         # for i, feats in enumerate(features):
@@ -86,6 +86,8 @@ class SoundDataset(Dataset):
         with torch.inference_mode():
             emission, _ = self.model(signal)
 
+
+        # print(emission.shape)
         # plt.imshow(emission[0].cpu().T)
         # plt.title("Classification result")
         # plt.xlabel("Frame (time-axis)")
@@ -94,7 +96,7 @@ class SoundDataset(Dataset):
         # print("Class labels:", bundle.get_labels())
 
         signal = self.transformation(signal)
-        # return signal, label
+        #return signal, label
         return emission, label
 
     def _cut_if_necessary(self, signal):
@@ -157,8 +159,7 @@ class SoundDataset(Dataset):
 
 if __name__ == "__main__":
 
-    bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
-
+    bundle = torchaudio.pipelines.WAV2VEC2_BASE
     print("Sample Rate:", bundle.sample_rate)
 
     ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
@@ -192,6 +193,6 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[479]
+    signal, label = usd[0]
 
     a = 1

@@ -53,16 +53,24 @@ class Convolutional_Speaker_Identification(nn.Module):
 
     def forward(self, X):
 
+
         x = nn.ReLU()(self.conv_2d_1(X))
+
         x = self.bn_1(x)
+
         x = self.max_pool_2d_1(x)
 
+
         x = nn.ReLU()(self.conv_2d_2(x))
+
         x = self.bn_2(x)
+
         x = self.max_pool_2d_2(x)
+
 
         x = nn.ReLU()(self.conv_2d_3(x))
         x = self.bn_3(x)
+
 
         x = nn.ReLU()(self.conv_2d_4(x))
         x = self.bn_4(x)

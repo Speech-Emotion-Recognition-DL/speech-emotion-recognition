@@ -86,7 +86,7 @@ def write_tess_ravdess_csv(emotions=int2emotion, train_name="Train_tess_ravdess.
             # print("byeeeeeeeeeeee")
             train_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
             print(os.path.basename(total_files[i]).split("-")[2])
-            train_target["label"].append(os.path.basename(total_files[i]).split("-")[2])
+            train_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
         if verbose and total_files:
             print(f"[TESS&RAVDESS] There are {len(total_files)} training audio files for category:{category}")
 
@@ -95,7 +95,7 @@ def write_tess_ravdess_csv(emotions=int2emotion, train_name="Train_tess_ravdess.
         for i, path in enumerate(total_files):
             test_target["path"].append(path)
             test_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
-            test_target["label"].append(os.path.basename(total_files[i]).split("-")[2])
+            test_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
         if verbose and total_files:
             print(f"[TESS&RAVDESS] There are {len(total_files)} testing audio files for category:{category}")
     pd.DataFrame(test_target).to_csv(test_name)
