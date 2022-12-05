@@ -1,16 +1,18 @@
 import glob
 import pandas as pd
 import os
-int2emotion = {
-    "01": "neutral",
-    "02": "calm",
-    "03": "happy",
-    "04": "sad",
-    "05": "angry",
-    "06": "fearful",
-    "07": "disgust",
-    "08": "surprised"
-}
+
+# int2emotion = {
+#     "00": "surprised",
+#     "01": "neutral",
+#     "02": "calm",
+#     "03": "happy",
+#     "04": "sad",
+#     "05": "angry",
+#     "06": "fearful",
+#     "07": "disgust"
+#
+# }
 
 #
 # def write_emodb_csv(emotions=["sad", "neutral", "happy"], train_name="train_emo.csv",
@@ -64,7 +66,22 @@ int2emotion = {
 #     pd.DataFrame({"path": X_test, "emotion": y_test}).to_csv(test_name)
 #
 
-def write_tess_ravdess_csv(emotions=int2emotion, train_name="Train_tess_ravdess.csv",
+
+# RAVDESS dataset emotions
+# shift emotions left to be 0 indexed for PyTorch
+emotions_dict = {
+    0: 'surprised',
+    1: 'neutral',
+    2: 'calm',
+    3: 'happy',
+    4: 'sad',
+    5: 'angry',
+    6: 'fearful',
+    7: 'disgust'
+}
+
+
+def write_tess_ravdess_csv(emotions=emotions_dict, train_name="Train_test_ravdess.csv",
                            test_name="Test_tess_ravdess.csv", verbose=1):
     """
     Reads speech TESS & RAVDESS datasets from directory and write it to a metadata CSV file.
@@ -73,33 +90,76 @@ def write_tess_ravdess_csv(emotions=int2emotion, train_name="Train_tess_ravdess.
         train_name (str): the output csv filename for training data, default is 'Train_tess_ravdess.csv'
         test_name (str): the output csv filename for testing data, default is 'Test_tess_ravdess.csv'
         verbose (int/bool): verbositiy level, 0 for silence, 1 for info, default is 1
+
+
+        Emotion (01 = neutral, 02 = calm, 03 = happy, 04 = sad, 05 = angry, 06 = fearful, 07 = disgust, 08 = surprised).
     """
-    train_target = {"path": [], "emotion": [], "label": []}
+    train_target = {"path": [], "emotion": [], "label": [], "gender": []}
     test_target = {"path": [], "emotion": [], "label": []}
+    counter = 0
 
-    for category in emotions:
+    data_path = '../project/data/Actor_*/*.wav'
+    data_path1 = '../project/data/Actor_'
 
-        # for training speech directory
-        total_files = glob.glob(f"../project/data/Actor_*/*{category}.wav")
-        for i, path in enumerate(total_files):
-            train_target["path"].append(path)
-            # print("byeeeeeeeeeeee")
-            train_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
-            print(os.path.basename(total_files[i]).split("-")[2])
-            train_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
-        if verbose and total_files:
-            print(f"[TESS&RAVDESS] There are {len(total_files)} training audio files for category:{category}")
 
-        # for validation speech directory
-        total_files = glob.glob(f"../project/data/Actor_*/*{category}.wav")
-        for i, path in enumerate(total_files):
-            test_target["path"].append(path)
-            test_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
-            test_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
-        if verbose and total_files:
-            print(f"[TESS&RAVDESS] There are {len(total_files)} testing audio files for category:{category}")
-    pd.DataFrame(test_target).to_csv(test_name)
+
+    for file in glob.glob(data_path):
+
+        file_path = os.path.basename(file)
+        train_target["path"].append(file)
+
+        # get emotion label from the sample's file
+        emotion = int(file_path.split("-")[2])
+
+
+        #  move surprise to 0 for cleaner behaviour with PyTorch/0-indexing
+        if emotion == 8:
+            emotion = 0  # surprise is now at 0 index; other emotion indeces unchanged
+
+        train_target["emotion"].append(emotions_dict.get(emotion))
+        train_target["label"].append(emotion)
+        
+        # get other labels we might want
+        # even actors are female, odd are male
+        gender = ""
+        if (int((file_path.split("-")[6]).split(".")[0])) % 2 == 0:
+            gender = 'female'
+
+        else:
+            gender = 'male'
+        train_target["gender"].append(gender)
+
     pd.DataFrame(train_target).to_csv(train_name)
+
+    #
+    # for category in emotions:
+    #
+    #
+    #     # for training speech directory
+    #     total_files = glob.glob(f"../project/data/Actor_*/*{category}.wav")
+    #     for i, path in enumerate(total_files):
+    #         train_target["path"].append(path)
+    #         # print("byeeeeeeeeeeee")
+    #         train_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
+    #         #print(os.path.basename(total_files[i]).split("-")[2])
+    #         train_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
+    #         counter = counter + 1
+    #     # if verbose and total_files:
+    #     #    print(f"[TESS&RAVDESS] There are {len(total_files)} training audio files for category:{category}")
+    #
+    #
+    # #     # for validation speech directory
+    # #     total_files = glob.glob(f"../project/data/Actor_*/*{category}.wav")
+    # #     for i, path in enumerate(total_files):
+    # #         test_target["path"].append(path)
+    # #         test_target["emotion"].append(int2emotion[os.path.basename(total_files[i]).split("-")[2]])
+    # #         test_target["label"].append(int(os.path.basename(total_files[i]).split("-")[2])-1)
+    # #     if verbose and total_files:
+    # #         print(f"[TESS&RAVDESS] There are {len(total_files)} testing audio files for category:{category}")
+    # # pd.DataFrame(test_target).to_csv(test_name)
+    # pd.DataFrame(train_target).to_csv(train_name)
+    #
+    # print(counter)
 
 
 # def write_custom_csv(emotions=['sad', 'neutral', 'happy'], train_name="train_custom.csv", test_name="test_custom.csv",
