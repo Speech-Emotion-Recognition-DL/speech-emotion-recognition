@@ -12,23 +12,15 @@ from cnn_model import Convolutional_Neural_Network
 """
 Batch size is a term used in machine learning and refers to the number of training examples utilized in one iteration"""
 BATCH_SIZE = 128
-EPOCHS = 100
-LEARNING_RATE = 0.001
+EPOCHS = 30
+# LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 
-ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
+ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_ravdess.csv'
 SAMPLE_RATE = 16000
 NUM_SAMPLES = 22050
 
-class_mapping = [
-    "neutral",
-    "calm",
-    "happy",
-    "sad",
-    "angry",
-    "fearful",
-    "disgust",
-    "surprised"
-]
+
 
 
 def create_data_loader(data, batch_size):
@@ -59,12 +51,12 @@ def train_single_epoch(model, data_loader, loss_fn, optimiser, device):
     for input, target in data_loader:
         optimiser.zero_grad()
         input, target = input.to(device), target.to(device)
-        print("target", target)
+        # print("target", target)
 
         # calculate loss
         prediction = model(input)
 
-        print(prediction)
+        # print(prediction)
         loss = loss_fn(prediction, target)
 
         # backpropagate error and update weights
@@ -99,7 +91,7 @@ def predict(model, test_loader):
     with torch.no_grad():
         for x_batch, y_batch in test_loader:
             y_pred = model(x_batch)
-            print(y_pred)
+           # print(y_pred)
             # print(y_pred)
             # pred_list.append(y_pred[0].argmax())
             pred_list.append(np.argmax(y_pred.cpu().detach().numpy()))
@@ -163,9 +155,7 @@ if __name__ == "__main__":
     # train model
     train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
 
-    # input = usd[1][0]
-    # target = usd[1][1]  # [batch size, num_channels, fr, time]
-    # input.unsqueeze_(0)
+
 
     acu = predict(cnn.cuda(), test_dataloader )
     print(acu)

@@ -162,7 +162,7 @@ if __name__ == "__main__":
     bundle = torchaudio.pipelines.WAV2VEC2_BASE
     print("Sample Rate:", bundle.sample_rate)
 
-    ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_tess_ravdess.csv'
+    ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_ravdess.csv'
 
     # SAMPLE_RATE = 16000
     SAMPLE_RATE = bundle.sample_rate
