@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import pandas as pd
 import torchaudio
-
+import librosa
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -65,6 +65,26 @@ class SoundDataset(Dataset):
 
         signal, sr = torchaudio.load(audio_sample_path)
         print(sr)
+
+        duration = signal.shape[1] / sr
+        print(f"The signal has a duration of {duration:.2f} seconds.")
+
+        # Trim the audio by specifying the start and end time in seconds
+        # signal = torchaudio.transforms.TimeTrim(start_time=0.5, end_time=3)(signal)
+        #
+
+        # Trim the signal to the first 2 seconds
+        start_time = 0
+        end_time = 2
+        start_index = int(start_time * sr)
+        end_index = int(end_time * sr)
+        signal = signal.narrow(1, start_index, end_index - start_index)
+        # Save the trimmed signal to a new audio file
+        # torchaudio.save("trimmed_audio.wav", signal, sr)
+
+        duration = signal.shape[1] / sr
+        print(f"The signal has a duration of {duration:.2f} seconds.")
+        
         # transforming the signal(waveform) into mel
         # spectrogram (or pass it into our transportation)
 
@@ -172,6 +192,17 @@ if __name__ == "__main__":
     SAMPLE_RATE = bundle.sample_rate
     NUM_SAMPLES = 22050
 
+
+    #TODO ADD
+    # Data Visualisation and Exploration
+    # plt.title('Count of Emotions', size=16)
+    # sns.countplot(ANNOTATIONS_FILE)
+    # plt.ylabel('Count', size=12)
+    # plt.xlabel('Emotions', size=12)
+    # sns.despine(top=True, right=True, left=False, bottom=False)
+    # plt.show()
+
+
     if torch.cuda.is_available():
         device = "cuda"
     else:
@@ -197,6 +228,6 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[0]
+    signal, label = usd[1441]
 
     a = 1
