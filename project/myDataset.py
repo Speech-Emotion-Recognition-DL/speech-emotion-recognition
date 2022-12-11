@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import pandas as pd
 import torchaudio
-import librosa
+# import librosa
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -96,6 +96,8 @@ class SoundDataset(Dataset):
         signal = self._cut_if_necessary(signal)
         signal = self._right_pad_if_necessary(signal)
 
+        print(signal.shape)
+
         features = self.get_features(signal)
         #
         # fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
@@ -145,7 +147,7 @@ class SoundDataset(Dataset):
         coherent in its shape in its dimensions
         """
         if sr != self.target_sample_rate:
-            resampler = torchaudio.transforms.Resample(sr, self.target_sample_rate)
+            resampler = torchaudio.transforms.Resample(sr, self.target_sample_rate).cuda()
             signal = resampler(signal)
         return signal
 
@@ -228,6 +230,6 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[1441]
+    signal, label = usd[1455]
 
     a = 1
