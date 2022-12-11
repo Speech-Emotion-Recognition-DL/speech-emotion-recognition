@@ -16,7 +16,7 @@ EPOCHS = 30
 # LEARNING_RATE = 0.001
 LEARNING_RATE = 0.0001
 
-ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_ravdess.csv'
+ANNOTATIONS_FILE = '../project/Train_test_.csv'
 SAMPLE_RATE = 16000
 NUM_SAMPLES = 22050
 
@@ -138,27 +138,29 @@ if __name__ == "__main__":
                        NUM_SAMPLES,
                        device)
 
-    train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
-
-    # construct model and assign it to device
-    # cnn = CNNNetwork().to(device)
-    cnn = Convolutional_Neural_Network().to(device)
-    # cnn = Convolutional_Speaker_Identification().to(device)
-
-    # print(cnn)
-
-    # initialise loss funtion + optimiser
-    loss_fn = nn.CrossEntropyLoss()
-    optimiser = torch.optim.Adam(cnn.parameters(),
-                                 lr=LEARNING_RATE)
-
-    # train model
-    train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
-
-
-
-    acu = predict(cnn.cuda(), test_dataloader )
-    print(acu)
+    print(usd[1][0])
+    #
+    # train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
+    #
+    # # construct model and assign it to device
+    # # cnn = CNNNetwork().to(device)
+    # cnn = Convolutional_Neural_Network().to(device)
+    # # cnn = Convolutional_Speaker_Identification().to(device)
+    #
+    # # print(cnn)
+    #
+    # # initialise loss funtion + optimiser
+    # loss_fn = nn.CrossEntropyLoss()
+    # optimiser = torch.optim.Adam(cnn.parameters(),
+    #                              lr=LEARNING_RATE)
+    #
+    # # train model
+    # train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
+    #
+    #
+    #
+    # acu = predict(cnn.cuda(), test_dataloader )
+    # print(acu)
     # save model
-    torch.save(cnn.state_dict(), "feedforwardnet.pth")
-    print("Trained feed forward net saved at feedforwardnet.pth")
+    #torch.save(cnn.state_dict(), "feedforwardnet.pth")
+    #print("Trained feed forward net saved at feedforwardnet.pth")

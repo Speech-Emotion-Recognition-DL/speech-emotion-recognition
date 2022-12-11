@@ -58,9 +58,13 @@ class SoundDataset(Dataset):
 
         # Loads an audio file at a particular index within the dataset
         audio_sample_path = self._get_audio_sample_path(index)
+        print(audio_sample_path)
         label = self._get_audio_sample_label(index)
-        signal, sr = torchaudio.load(audio_sample_path)
+        print(label)
 
+
+        signal, sr = torchaudio.load(audio_sample_path)
+        print(sr)
         # transforming the signal(waveform) into mel
         # spectrogram (or pass it into our transportation)
 
@@ -162,8 +166,8 @@ if __name__ == "__main__":
     bundle = torchaudio.pipelines.WAV2VEC2_BASE
     print("Sample Rate:", bundle.sample_rate)
 
-    ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_ravdess.csv'
-
+    #ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_.csv'
+    ANNOTATIONS_FILE = '../project/Train_test_.csv'
     # SAMPLE_RATE = 16000
     SAMPLE_RATE = bundle.sample_rate
     NUM_SAMPLES = 22050
