@@ -53,53 +53,58 @@ class SoundDataset(Dataset):
         signal - the waveform
         sample rate - time series of the audio file
         """
-        # Todo change the transformer to wav2vec
-        # Todo what is the best number of sample rate and num of sample
 
         # Loads an audio file at a particular index within the dataset
         audio_sample_path = self._get_audio_sample_path(index)
-        print(audio_sample_path)
+
         label = self._get_audio_sample_label(index)
-        print(label)
+
+        signal, sample_rate = torchaudio.load(audio_sample_path)
+        # print(sample_rate)
+
+        # # stats of this data
+        # self.print_stats(signal, sample_rate=sample_rate)
+        # self.plot_waveform(signal, sample_rate)
+        # self.plot_specgram(signal, sample_rate)
+
+        duration = signal.shape[1] / sample_rate
+        # print(f"The signal has a duration of {duration:.2f} seconds.")
 
 
-        signal, sr = torchaudio.load(audio_sample_path)
-        print(sr)
-
-        duration = signal.shape[1] / sr
-        print(f"The signal has a duration of {duration:.2f} seconds.")
-
-        # Trim the audio by specifying the start and end time in seconds
-        # signal = torchaudio.transforms.TimeTrim(start_time=0.5, end_time=3)(signal)
-        #
+        if duration < 2:
+            signal = signal.repeat(1, 2)
 
         # Trim the signal to the first 2 seconds
         start_time = 0
         end_time = 2
-        start_index = int(start_time * sr)
-        end_index = int(end_time * sr)
+        start_index = int(start_time * sample_rate)
+        end_index = int(end_time * sample_rate)
         signal = signal.narrow(1, start_index, end_index - start_index)
         # Save the trimmed signal to a new audio file
-        # torchaudio.save("trimmed_audio.wav", signal, sr)
+        # torchaudio.save("trimmed_audio.wav", signal, sample_rate)
 
-        duration = signal.shape[1] / sr
-        print(f"The signal has a duration of {duration:.2f} seconds.")
-        
+        duration = signal.shape[1] / sample_rate
+        # print(f"The signal has a duration of {duration:.2f} seconds.")
+
         # transforming the signal(waveform) into mel
         # spectrogram (or pass it into our transportation)
 
         signal = signal.to(self.device)
-        signal = self._resample_if_necessary(signal, sr)
+        signal = self._resample_if_necessary(signal, sample_rate)
         signal = self._mix_down_if_necessary(signal)
+
+
+
+
 
         # adjusting the audio length
         signal = self._cut_if_necessary(signal)
         signal = self._right_pad_if_necessary(signal)
 
-        print(signal.shape)
+        # print(signal.shape[1])
 
         features = self.get_features(signal)
-        #
+
         # fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
         # for i, feats in enumerate(features):
         #     ax[i].imshow(feats[0].cpu())
@@ -112,7 +117,6 @@ class SoundDataset(Dataset):
         with torch.inference_mode():
             emission, _ = self.model(signal)
 
-
         # print(emission.shape)
         # plt.imshow(emission[0].cpu().T)
         # plt.title("Classification result")
@@ -122,7 +126,7 @@ class SoundDataset(Dataset):
         # print("Class labels:", bundle.get_labels())
 
         signal = self.transformation(signal)
-        #return signal, label
+        # return signal, label
         return emission, label
 
     def _cut_if_necessary(self, signal):
@@ -160,13 +164,13 @@ class SoundDataset(Dataset):
         return signal
 
     def _get_audio_sample_path(self, index):
-       """
-        # getting the value of the cell from the csv file
-        # row is the index
-        # column is 1
-       """
-       path = self.annotations.iloc[index, 1]
-       return path
+        """
+         # getting the value of the cell from the csv file
+         # row is the index
+         # column is 1
+        """
+        path = self.annotations.iloc[index, 1]
+        return path
 
     def _get_audio_sample_label(self, index):
         """
@@ -182,20 +186,76 @@ class SoundDataset(Dataset):
             features, _ = self.model.extract_features(signal)
             return features
 
+    def print_stats(self, signal, sample_rate=None, src=None):
+        if src:
+            print("-" * 10)
+            print("Source:", src)
+            print("-" * 10)
+        if sample_rate:
+            print("Sample Rate:", sample_rate)
+        print("Shape:", tuple(signal.shape))
+        print("Dtype:", signal.dtype)
+        print(f" - Max:     {signal.max().item():6.3f}")
+        print(f" - Min:     {signal.min().item():6.3f}")
+        print(f" - Mean:    {signal.mean().item():6.3f}")
+        print(f" - Std Dev: {signal.std().item():6.3f}")
+        print()
+        print(signal)
+        print()
+
+    def plot_waveform(self, signal, sample_rate, title="Waveform", xlim=None, ylim=None):
+        signal = signal.numpy()
+
+        num_channels, num_frames = signal.shape
+        time_axis = torch.arange(0, num_frames) / sample_rate
+
+        figure, axes = plt.subplots(num_channels, 1)
+        if num_channels == 1:
+            axes = [axes]
+        for c in range(num_channels):
+            axes[c].plot(time_axis, signal[c], linewidth=1)
+            axes[c].grid(True)
+            if num_channels > 1:
+                axes[c].set_ylabel(f'Channel {c + 1}')
+            if xlim:
+                axes[c].set_xlim(xlim)
+            if ylim:
+                axes[c].set_ylim(ylim)
+        figure.suptitle(title)
+        plt.show(block=False)
+
+    def plot_specgram(self, signal, sample_rate, title="Spectrogram", xlim=None):
+        signal = signal.numpy()
+
+        num_channels, num_frames = signal.shape
+        time_axis = torch.arange(0, num_frames) / sample_rate
+
+        figure, axes = plt.subplots(num_channels, 1)
+        if num_channels == 1:
+            axes = [axes]
+        for c in range(num_channels):
+            axes[c].specgram(signal[c], Fs=sample_rate)
+            if num_channels > 1:
+                axes[c].set_ylabel(f'Channel {c + 1}')
+            if xlim:
+                axes[c].set_xlim(xlim)
+        figure.suptitle(title)
+        plt.show(block=False)
+
 
 if __name__ == "__main__":
 
     bundle = torchaudio.pipelines.WAV2VEC2_BASE
     print("Sample Rate:", bundle.sample_rate)
 
-    #ANNOTATIONS_FILE = 'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/Train_test_.csv'
+
     ANNOTATIONS_FILE = '../project/Train_test_.csv'
     # SAMPLE_RATE = 16000
     SAMPLE_RATE = bundle.sample_rate
-    NUM_SAMPLES = 22050
+    NUM_SAMPLES = bundle.sample_rate
 
 
-    #TODO ADD
+    # TODO ADD
     # Data Visualisation and Exploration
     # plt.title('Count of Emotions', size=16)
     # sns.countplot(ANNOTATIONS_FILE)
@@ -203,7 +263,6 @@ if __name__ == "__main__":
     # plt.xlabel('Emotions', size=12)
     # sns.despine(top=True, right=True, left=False, bottom=False)
     # plt.show()
-
 
     if torch.cuda.is_available():
         device = "cuda"
@@ -230,6 +289,7 @@ if __name__ == "__main__":
                        device)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[1455]
+    signal, label = usd[48757]
 
     a = 1
+

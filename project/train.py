@@ -8,17 +8,17 @@ from myDataset import SoundDataset
 from cnn import CNNNetwork
 from project.cnn_model_definition import Convolutional_Speaker_Identification
 from cnn_model import Convolutional_Neural_Network
-
+from torchsummary import summary
 """
 Batch size is a term used in machine learning and refers to the number of training examples utilized in one iteration"""
 BATCH_SIZE = 128
 EPOCHS = 30
 # LEARNING_RATE = 0.001
 LEARNING_RATE = 0.0001
-
+bundle = torchaudio.pipelines.WAV2VEC2_BASE
 ANNOTATIONS_FILE = '../project/Train_test_.csv'
-SAMPLE_RATE = 16000
-NUM_SAMPLES = 22050
+SAMPLE_RATE = bundle.sample_rate
+NUM_SAMPLES = bundle.sample_rate
 
 
 
@@ -129,38 +129,45 @@ if __name__ == "__main__":
         n_mels=64
     )
     bundle = torchaudio.pipelines.WAV2VEC2_BASE
-    model_wev2vec = bundle.get_model().to(device)
+    model_wav2vec = bundle.get_model().to(device)
 
     usd = SoundDataset(ANNOTATIONS_FILE,
-                       model_wev2vec,
+                       model_wav2vec,
                        mel_spectrogram,
                        SAMPLE_RATE,
                        NUM_SAMPLES,
                        device)
 
-    print(usd[1][0])
-    #
-    # train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
-    #
-    # # construct model and assign it to device
-    # # cnn = CNNNetwork().to(device)
-    # cnn = Convolutional_Neural_Network().to(device)
-    # # cnn = Convolutional_Speaker_Identification().to(device)
-    #
-    # # print(cnn)
-    #
-    # # initialise loss funtion + optimiser
-    # loss_fn = nn.CrossEntropyLoss()
-    # optimiser = torch.optim.Adam(cnn.parameters(),
-    #                              lr=LEARNING_RATE)
-    #
-    # # train model
-    # train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
-    #
-    #
-    #
-    # acu = predict(cnn.cuda(), test_dataloader )
-    # print(acu)
-    # save model
+    #print(usd[1][0])
+
+    train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
+
+    # construct model and assign it to device
+    # cnn = CNNNetwork().to(device)
+    cnn = Convolutional_Neural_Network().to(device)
+    # cnn = Convolutional_Speaker_Identification().to(device)
+    #summary(cnn.cuda(), (1, 49, 768))  # the shape of the signal
+    # print(cnn)
+
+
+    # initialise loss funtion + optimiser
+
+    """
+    PyTorch nn.CrossEntropyLoss() implements log softmax and negative log likelihood loss 
+    (nn.NLLoss() --> nn.LogSoftmax()) We use log softmax for computation benefits and faster
+    gradient optimization. 
+    Log softmax heavily penalizes the model when failing to predict the correct class."""
+    loss_fn = nn.CrossEntropyLoss()
+    optimiser = torch.optim.Adam(cnn.parameters(),
+                                 lr=LEARNING_RATE)
+
+    # train model
+    train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
+
+
+
+    acu = predict(cnn.cuda(), test_dataloader )
+    print(acu)
+    #save model
     #torch.save(cnn.state_dict(), "feedforwardnet.pth")
     #print("Trained feed forward net saved at feedforwardnet.pth")
