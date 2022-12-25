@@ -6,6 +6,53 @@ import torchaudio
 # import librosa
 import matplotlib
 import matplotlib.pyplot as plt
+# import torchaudio.transforms as transforms
+# import torchvision.transforms as transforms
+import torchvision.transforms as transforms
+import random
+
+
+
+from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter
+import numpy as np
+# from datasets import load_metric
+from audiomentations.augmentations.mp3_compression import Mp3Compression
+import soundfile as sf #save data as wav file
+import os
+import glob
+from pathlib import Path
+# import audio2numpy as a2n
+
+
+# Change p = 0 for augmentations you dont want to use and p = 1 to augmentation you want
+augment1 = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=1),
+    TimeMask(min_band_part=0.0, max_band_part=0.15, p=0), # masks too much time in many cases
+    PitchShift(min_semitones=-6, max_semitones=8, p=0),
+    BandStopFilter(min_center_freq = 60, max_center_freq = 2500, min_bandwidth_fraction = 0.1, max_bandwidth_fraction = 0.4, p=0)
+])
+
+augment2 = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=0),
+    TimeMask(min_band_part=0.0, max_band_part=0.15, p=1), # masks too much time in many cases
+    PitchShift(min_semitones=-6, max_semitones=8, p=0),
+    BandStopFilter(min_center_freq = 60, max_center_freq = 2500, min_bandwidth_fraction = 0.1, max_bandwidth_fraction = 0.4, p=0)
+])
+
+augment3 = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=0),
+    TimeMask(min_band_part=0.0, max_band_part=0.15, p=0), # masks too much time in many cases
+    PitchShift(min_semitones=-6, max_semitones=8, p=1),
+    BandStopFilter(min_center_freq = 60, max_center_freq = 2500, min_bandwidth_fraction = 0.1, max_bandwidth_fraction = 0.4, p=0)
+])
+
+augment4 = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=0),
+    TimeMask(min_band_part=0.0, max_band_part=0.15, p=0), # masks too much time in many cases
+    PitchShift(min_semitones=-6, max_semitones=8, p=0),
+    BandStopFilter(min_center_freq = 60, max_center_freq = 2500, min_bandwidth_fraction = 0.1, max_bandwidth_fraction = 0.4, p=1)
+])
+
 
 int2emotion = {
     "01": "neutral",
@@ -27,13 +74,16 @@ class SoundDataset(Dataset):
                  transformation,
                  target_sample_rate,
                  num_samples,
-                 device):
+                 device,
+                 augmentations):
         self.annotations = pd.read_csv(annotations_file)
         self.model = model
         self.device = device
         self.transformation = transformation.to(self.device)
         self.target_sample_rate = target_sample_rate
         self.num_samples = num_samples
+        self.augmentations = augmentations
+
 
     def __len__(self):
         """
@@ -60,7 +110,28 @@ class SoundDataset(Dataset):
         label = self._get_audio_sample_label(index)
 
         signal, sample_rate = torchaudio.load(audio_sample_path)
-        # print(sample_rate)
+        #print(sample_rate)
+
+        # Generate a random integer between 0 and 4 (inclusive)
+        num = random.randint(0, 2)
+       # print(num)
+       #  if self.augmentations:
+       #      signal = augment1(signal, self.num_samples)
+            # if num == 1:
+            #     signal = augment1(signal, self.num_samples)
+            # elif num == 2:
+            #     signal = augment2(signal, self.num_samples)
+            # elif num == 3:
+            #     signal = augment3(signal, self.num_samples)
+            # elif num == 4:
+            #     signal = augment3(signal, self.num_samples)
+
+
+        # if self.augmentations == False:
+        #     print("false")
+            #signal = augment(signal,self.num_samples)
+        # elif not self.augmentations:
+        #     print("FALSE")
 
         # # stats of this data
         # self.print_stats(signal, sample_rate=sample_rate)
@@ -125,7 +196,7 @@ class SoundDataset(Dataset):
         # plt.show()
         # print("Class labels:", bundle.get_labels())
 
-        signal = self.transformation(signal)
+        #signal = self.transformation(signal)
         # return signal, label
         return emission, label
 
@@ -248,21 +319,12 @@ if __name__ == "__main__":
     bundle = torchaudio.pipelines.WAV2VEC2_BASE
     print("Sample Rate:", bundle.sample_rate)
 
-
     ANNOTATIONS_FILE = '../project/Train_test_.csv'
-    # SAMPLE_RATE = 16000
+
     SAMPLE_RATE = bundle.sample_rate
     NUM_SAMPLES = bundle.sample_rate
 
 
-    # TODO ADD
-    # Data Visualisation and Exploration
-    # plt.title('Count of Emotions', size=16)
-    # sns.countplot(ANNOTATIONS_FILE)
-    # plt.ylabel('Count', size=12)
-    # plt.xlabel('Emotions', size=12)
-    # sns.despine(top=True, right=True, left=False, bottom=False)
-    # plt.show()
 
     if torch.cuda.is_available():
         device = "cuda"
@@ -281,15 +343,25 @@ if __name__ == "__main__":
         n_mels=64  # number of mel
     )
 
+    # Change p = 0 for augmentations you dont want to use and p = 1 to augmentation you want
+    augment = Compose([
+        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=1),
+        TimeMask(min_band_part=0.0, max_band_part=0.15, p=0),  # masks too much time in many cases
+        PitchShift(min_semitones=-6, max_semitones=8, p=0),
+        BandStopFilter(min_center_freq=60, max_center_freq=2500, min_bandwidth_fraction=0.1, max_bandwidth_fraction=0.4,
+                       p=0)
+    ])
+
+
     usd = SoundDataset(ANNOTATIONS_FILE,
                        model,
                        mel_spectrogram,
                        SAMPLE_RATE,
                        NUM_SAMPLES,
-                       device)
+                       device,True)
 
     print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[48757]
+    signal, label = usd[1]
 
     a = 1
 
