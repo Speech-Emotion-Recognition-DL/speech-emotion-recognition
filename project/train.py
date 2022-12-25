@@ -3,24 +3,26 @@ import torch
 import torchaudio
 from torch import nn
 from torch.utils.data import DataLoader, random_split
-
 from myDataset import SoundDataset
 from cnn import CNNNetwork
 from project.cnn_model_definition import Convolutional_Speaker_Identification
 from cnn_model import Convolutional_Neural_Network
 from torchsummary import summary
+from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter
+
 """
 Batch size is a term used in machine learning and refers to the number of training examples utilized in one iteration"""
 BATCH_SIZE = 128
-EPOCHS = 30
+EPOCHS = 20
 # LEARNING_RATE = 0.001
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.0003
 bundle = torchaudio.pipelines.WAV2VEC2_BASE
 ANNOTATIONS_FILE = '../project/Train_test_.csv'
 SAMPLE_RATE = bundle.sample_rate
 NUM_SAMPLES = bundle.sample_rate
-
-
+model = bundle.get_model()
+augmentations = True
+import random
 
 
 def create_data_loader(data, batch_size):
@@ -33,11 +35,28 @@ def create_data_loader(data, batch_size):
     """
 
     train = int(data.__len__() * 0.8)
-    test = int(data.__len__() * 0.2)
+    test = data.__len__() - train
+    # test = int(data.__len__() * 0.2)
+
+    print("train: ", train)
+    print("test: ", test)
+
     train_data, test_data = random_split(dataset=data, lengths=[train, test])
+    # print("train data: ", train_data, test_data)
+
     train_dataloader = DataLoader(train_data, batch_size=batch_size)
+
     test_dataloader = DataLoader(test_data, batch_size=1)
     return train_dataloader, test_dataloader
+
+
+augment1 = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.03, p=1),
+    TimeMask(min_band_part=0.0, max_band_part=0.15, p=0),  # masks too much time in many cases
+    PitchShift(min_semitones=-6, max_semitones=8, p=0),
+    BandStopFilter(min_center_freq=60, max_center_freq=2500, min_bandwidth_fraction=0.1, max_bandwidth_fraction=0.4,
+                   p=0)
+])
 
 
 def train_single_epoch(model, data_loader, loss_fn, optimiser, device):
@@ -49,8 +68,19 @@ def train_single_epoch(model, data_loader, loss_fn, optimiser, device):
     """
 
     for input, target in data_loader:
+        num = random.randint(0, 2)
+
+        if num % 2 == 0:
+            # print(input.shape)
+            input = input.cpu()
+            input = augment1(input, SAMPLE_RATE)
         optimiser.zero_grad()
+
+        # Apply the transformations to the audio data
+        # print(input.shape)
+
         input, target = input.to(device), target.to(device)
+
         # print("target", target)
 
         # calculate loss
@@ -91,16 +121,15 @@ def predict(model, test_loader):
     with torch.no_grad():
         for x_batch, y_batch in test_loader:
             y_pred = model(x_batch)
-           # print(y_pred)
+            # print(y_pred)
             # print(y_pred)
             # pred_list.append(y_pred[0].argmax())
             pred_list.append(np.argmax(y_pred.cpu().detach().numpy()))
             target.append(y_batch.cpu()[0])
             # print(pred_list)
-            #print(target)
+            # print(target)
 
     accuracy = (np.array(pred_list) == np.array(target)).sum() / len(target) * 100
-
 
     return accuracy
 
@@ -112,6 +141,32 @@ def train(model, data_loader, loss_fn, optimiser, device, epochs):
         train_single_epoch(model, data_loader, loss_fn, optimiser, device)
         print("---------------------------")
     print("Finished training")
+
+
+def validate(model, test_dataloader, device):
+    """
+    The function then iterates through the test dataloader
+     and uses the model to make predictions on each batch of test data.
+    It compares the predicted labels to the true labels and increments the correct counter if the prediction was correct.
+     The function also keeps track of the total number of samples in the test set with the total variable.
+
+    After iterating through all the test data, the function
+    returns the accuracy of the model as a percentage, which is calculated by dividing the number
+     of correct predictions by the total number of samples in the test set.
+    """
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for inputs, labels in test_dataloader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    return correct / total
 
 
 if __name__ == "__main__":
@@ -136,9 +191,9 @@ if __name__ == "__main__":
                        mel_spectrogram,
                        SAMPLE_RATE,
                        NUM_SAMPLES,
-                       device)
+                       device, True)
 
-    #print(usd[1][0])
+    # print(usd[1][0])
 
     train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
 
@@ -146,9 +201,8 @@ if __name__ == "__main__":
     # cnn = CNNNetwork().to(device)
     cnn = Convolutional_Neural_Network().to(device)
     # cnn = Convolutional_Speaker_Identification().to(device)
-    #summary(cnn.cuda(), (1, 49, 768))  # the shape of the signal
+    # summary(cnn.cuda(), (1, 49, 768))  # the shape of the signal
     # print(cnn)
-
 
     # initialise loss funtion + optimiser
 
@@ -164,10 +218,19 @@ if __name__ == "__main__":
     # train model
     train(cnn.cuda(), train_dataloader, loss_fn, optimiser, device, EPOCHS)
 
+    # Save the model
+    torch.save(cnn.cuda().state_dict(), 'model.pt')
+
+    # Save the dataset and dataloader
+    torch.save(test_dataloader.dataset, 'test_dataset.pt')
+    torch.save(test_dataloader, 'test_dataloader.pt')
+
+    torch.save(test_dataloader.dataset, 'train_dataset.pt')
+    torch.save(test_dataloader, 'train_dataloader.pt')
 
 
-    acu = predict(cnn.cuda(), test_dataloader )
+    val = validate(cnn.cuda(), train_dataloader, device)
+    print(val)
+
+    acu = predict(cnn.cuda(), test_dataloader)
     print(acu)
-    #save model
-    #torch.save(cnn.state_dict(), "feedforwardnet.pth")
-    #print("Trained feed forward net saved at feedforwardnet.pth")

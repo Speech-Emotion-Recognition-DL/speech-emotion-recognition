@@ -211,60 +211,60 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
 
 
-    #TESS dataset
-    data_path = '../project/data/TESS/*'
-    for i in glob.glob(data_path):
-        file_name = os.path.basename(i)
-
-
-
-        for f in glob.glob(data_path+"/*"):
-            file_path = os.path.basename(f)
-            # print(i+"\\"+file_path)
-
-
-            #print(file_path)
-            if file_name == 'OAF_angry' or file_name == 'YAF_angry':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("angry")
-                train_target["label"].append(5)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_disgust' or file_name == 'YAF_disgust':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("disgust")
-                train_target["label"].append(7)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_Fear' or file_name == 'YAF_fear':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("fearful")
-                train_target["label"].append(6)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_happy' or file_name == 'YAF_happy':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("happy")
-                train_target["label"].append(3)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_neutral' or file_name == 'YAF_neutral':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("neutral")
-                train_target["label"].append(1)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_Pleasant_surprise' or file_name == 'YAF_pleasant_surprised':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("surprised")
-                train_target["label"].append(0)
-                train_target["gender"].append("female")
-
-            elif file_name == 'OAF_Sad' or file_name == 'YAF_sad':
-                train_target["path"].append(i + "\\" + file_path)
-                train_target["emotion"].append("sad")
-                train_target["label"].append(4)
-                train_target["gender"].append("female")
+    # #TESS dataset
+    # data_path = '../project/data/TESS/*'
+    # for i in glob.glob(data_path):
+    #     file_name = os.path.basename(i)
+    #
+    #
+    #
+    #     for f in glob.glob(data_path+"/*"):
+    #         file_path = os.path.basename(f)
+    #         # print(i+"\\"+file_path)
+    #
+    #
+    #         #print(file_path)
+    #         if file_name == 'OAF_angry' or file_name == 'YAF_angry':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("angry")
+    #             train_target["label"].append(5)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_disgust' or file_name == 'YAF_disgust':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("disgust")
+    #             train_target["label"].append(7)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_Fear' or file_name == 'YAF_fear':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("fearful")
+    #             train_target["label"].append(6)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_happy' or file_name == 'YAF_happy':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("happy")
+    #             train_target["label"].append(3)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_neutral' or file_name == 'YAF_neutral':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("neutral")
+    #             train_target["label"].append(1)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_Pleasant_surprise' or file_name == 'YAF_pleasant_surprised':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("surprised")
+    #             train_target["label"].append(0)
+    #             train_target["gender"].append("female")
+    #
+    #         elif file_name == 'OAF_Sad' or file_name == 'YAF_sad':
+    #             train_target["path"].append(i + "\\" + file_path)
+    #             train_target["emotion"].append("sad")
+    #             train_target["label"].append(4)
+    #             train_target["gender"].append("female")
 
 
 
