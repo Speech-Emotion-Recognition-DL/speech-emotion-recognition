@@ -46,6 +46,9 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     data_path = '../project/data/RAVDESS/Actor_*/*.wav'
     data_path1 = '../project/data/Actor_'
 
+    RAVDESS_sample_size = glob.glob(data_path).__len__()
+    print("RAVDESS Num of samples: ", RAVDESS_sample_size)
+
     for file in glob.glob(data_path):
 
         file_path = os.path.basename(file)
@@ -78,6 +81,8 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     data_path = '../project/data/SAVEE/*'
     counter = 0
     emotion = []
+    SAVEE_sample_size = glob.glob(data_path).__len__()
+    print("SAVEE Num of samples: ", SAVEE_sample_size)
 
     for file in glob.glob(data_path):
 
@@ -123,6 +128,7 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
     # CREMA-D dataset
     data_path = '../project/data/CREMA-D/*'
+    # Hardcoded female prefixes.
     female = [1002, 1003, 1004, 1006, 1007, 1008, 1009, 1010, 1012, 1013, 1018, 1020, 1021, 1024, 1025, 1028, 1029,
               1030, 1037, 1043, 1046, 1047, 1049,
               1052, 1053, 1054, 1055, 1056, 1058, 1060, 1061, 1063, 1072, 1073, 1074, 1075, 1076, 1078, 1079, 1082,
@@ -136,7 +142,7 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         train_target["path"].append(i)
 
 
-
+        # know the gender by check if contain in the female list.
         part = file_path.split('_')
         if int(part[0]) in female:
             temp = 'female'
@@ -205,6 +211,10 @@ def write_data_to_csv(train_name="Train_test_.csv"):
             train_target["label"].append(1)
             train_target["gender"].append("female")
 
+    crema_d_sample_size = glob.glob(data_path).__len__()
+    print("CREMA_D Num of samples: ", crema_d_sample_size)
+
+
 
 
 
@@ -213,6 +223,8 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
     #TESS dataset
     data_path = '../project/data/TESS/*'
+    TESS_sample_size = glob.glob(data_path).__len__()
+    print("TESS Num of samples: ", TESS_sample_size)
     for i in glob.glob(data_path):
         file_name = os.path.basename(i)
 
