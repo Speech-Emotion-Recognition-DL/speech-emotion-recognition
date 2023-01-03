@@ -19,7 +19,7 @@ sample_rate = bundle.sample_rate
 ANNOTATIONS_FILE = 'Train_test_.csv'
 
 
-class DataManagement(Dataset):
+class DataManagement:
 
     def __init__(self):
         self.annotations = pd.read_csv(ANNOTATIONS_FILE)
@@ -29,9 +29,6 @@ class DataManagement(Dataset):
         the length of our dataframe
         """
         return len(self.annotations)
-
-    def __getitem__(self, item):
-        pass
 
     def load_data(self):
         waveforms = []
@@ -48,10 +45,11 @@ class DataManagement(Dataset):
             # get the waveform from the audio file via torch_audio.load
             waveform = self.signal(audio_sample_path)
             waveforms.append(waveform)
-
+            index += 1
+        
         return waveforms, emotions
 
-    def split(self):
+    def split_data(self):
         pass
 
     def signal(self, file):
@@ -95,7 +93,6 @@ class DataManagement(Dataset):
         wave = np.array(waveform[0].numpy())
         waveform_homo = np.zeros((int(sample_rate * 3, )))
         waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
-        print("HOMO")
 
         # plt.figure(figsize=(15, 4))
         # plt.subplot(1, 2, 1)
@@ -142,8 +139,5 @@ class DataManagement(Dataset):
 if __name__ == '__main__':
     dm = DataManagement()
     waveforms, emotions = dm.load_data()
-    print(waveforms.numpy())
-    # i = 0
-    # while i < dm.__len__():
-    #     dm.__getitem__(i)
-    #     i += 1
+    print(emotions)
+
