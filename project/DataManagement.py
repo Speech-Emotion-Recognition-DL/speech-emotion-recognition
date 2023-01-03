@@ -15,7 +15,9 @@ warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-bundle = torchaudio.pipelines.WAV2VEC2_BASE
+# bundle = torchaudio.pipelines.WAV2VEC2_BASE
+bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+
 model = bundle.get_model().to(device)
 sample_rate = bundle.sample_rate
 ANNOTATIONS_FILE = 'Train_test_.csv'
@@ -31,6 +33,8 @@ class DataManagement:
         the length of our dataframe
         """
         return len(self.annotations)
+
+    """ -------------- Methods for Data Manipulations -------------- """
 
     def load_data(self):
         """ In this method, we load the data that we will be used from the model,
@@ -60,6 +64,7 @@ class DataManagement:
         return waveforms, emotions
 
     def split_data(self, waveforms, emotions):
+        """  """
 
         # lists that will contain data extracted from signals
         X_train, X_valid, X_test = [], [], []
@@ -97,13 +102,14 @@ class DataManagement:
             """ For each X,Y train/val/test,
                 we add the correlated data from waveforms depend of the indexes we extracted before
                  """
-            X_train.append(waveforms[train_indexes, :])
+            # print(train_indexes, )
+            X_train.append(waveforms_arr[train_indexes, :])
             Y_train.append(np.array([emotion_number] * len(train_indexes), dtype=np.int32))
 
-            X_valid.append(waveforms[val_indexes, :])
+            X_valid.append(waveforms_arr[val_indexes, :])
             Y_valid.append(np.array([emotion_number] * len(val_indexes), dtype=np.int32))
 
-            X_test.append(waveforms[test_indexes, :])
+            X_test.append(waveforms_arr[test_indexes, :])
             Y_test.append(np.array([emotion_number] * len(test_indexes), dtype=np.int32))
 
         """ concatenate all the waveforms we added each time to the X train/valid/test to one array"""
@@ -121,9 +127,31 @@ class DataManagement:
         print(f'Validation waveforms:{X_valid.shape}, y_valid:{Y_valid.shape}')
         print(f'Test waveforms:{X_test.shape}, y_test:{Y_test.shape}')
 
+        # Return 3 tuples, Each tuple represent (X_, Y_) for train/valid/test.
         return (X_train, Y_train), (X_valid, Y_valid), (X_test, Y_test)
 
+    """ -------------- Methods for Features Extraction -------------- """
 
+    def feature_extraction(self, x_waveforms):
+        features = []
+        file_count = 0
+        for waveform in x_waveforms:
+            waveform = waveform.reshape(1, -1)
+            # print(waveform.shape)
+
+            # convert the waveform to dtype:float Tensor
+            wave_tensor = torch.from_numpy(waveform).float()
+            wave_tensor = wave_tensor.to(device)
+
+            with torch.inference_mode():
+                feat, _ = model.extract_features(wave_tensor)
+            with torch.inference_mode():
+                emission, _ = model(wave_tensor)
+                features.append(emission)
+                print('\r' + f' Processed {file_count}/{len(x_waveforms)} waveforms', end='')
+                file_count += 1
+
+        return features
 
     def signal(self, file):
         """
@@ -138,6 +166,7 @@ class DataManagement:
         waveform, sr = torchaudio.load(file)
 
         waveform = self._mix_down_if_necessary(waveform)
+        waveform = waveform.to(device)
 
         """ If the sample rate of the signal is not 16,000, resample."""
         if sr != bundle.sample_rate:
@@ -148,11 +177,19 @@ class DataManagement:
             Now each sample have same length.
             """
         half_sec = int(0.5 * sr)  # shift 0.5 sec
-        wave = np.array(waveform[0].numpy())
+        wave = np.array(waveform[0].cpu().numpy())
         waveform_homo = np.zeros((int(sample_rate * 3, )))
         waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
 
         return waveform_homo
+
+    def plot_emission(self, emission):
+        # plot the classification results
+        plt.imshow(emission[0].cpu().T)
+        plt.title("Classification result")
+        plt.ylabel("Frame (time-axis)")
+        plt.xlabel("Class")
+        plt.show()
 
     """ -------------- Methods for CSV -------------- """
 
@@ -188,10 +225,19 @@ class DataManagement:
 if __name__ == '__main__':
     dm = DataManagement()
     waveforms, emotions = dm.load_data()
-    print(emotions)
+
     print(f'Waveforms set: {len(waveforms)} samples')
     # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
     print(f'Waveform signal length: {len(waveforms[0])}')
     print(f'Emotions set: {len(emotions)} sample labels')
 
-    train, valid, test = dm.split_data(waveforms, emotions)
+    train_XY, valid_XY, test_XY = dm.split_data(waveforms, emotions)
+
+    train_X = train_XY[0]
+    valid_X = valid_XY[0]
+    test_X = test_XY[0]
+
+    features = dm.feature_extraction(train_X)
+    print()
+    print(features[0].shape)
+    dm.plot_emission(features[0])
