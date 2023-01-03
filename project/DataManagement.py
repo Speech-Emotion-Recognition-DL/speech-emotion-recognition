@@ -2,12 +2,12 @@ from torch.utils.data import Dataset
 import numpy as np
 import torch
 import torchaudio
-import torch.nn as nn
+# import torch.nn as nn
 import pandas as pd
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
-import warnings;
+import warnings
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
@@ -30,72 +30,85 @@ class DataManagement(Dataset):
         """
         return len(self.annotations)
 
-    def __getitem__(self, index):
+    def __getitem__(self, item):
+        pass
+
+    def load_data(self):
         waveforms = []
+        emotions = []
+        index = 0
+        # print(self.__len__())
+        while index < self.__len__():
+            # get the path from CSV
+            audio_sample_path = self._get_audio_sample_path(index)
 
-        audio_sample_path = self._get_audio_sample_path(index)
+            # extract the correlate label from CSV
+            label = self._get_audio_sample_label(index)
+            emotions.append(label)
+            # get the waveform from the audio file via torch_audio.load
+            waveform = self.signal(audio_sample_path)
+            waveforms.append(waveform)
 
-        waveforms.append(self.signal(audio_sample_path))
-
-        print(waveforms)
-        return waveforms
-
+        return waveforms, emotions
 
     def split(self):
         pass
 
-
     def signal(self, file):
-         """
-         waveform: a tensor containing the
-          audio data of the audio file.
-          The shape of this tensor will depend on the
-          number of channels and the length of the audio file.
+        """
+        waveform: a tensor containing the
+         audio data of the audio file.
+         The shape of this tensor will depend on the
+         number of channels and the length of the audio file.
 
-         sr: the sample rate of the audio file, in Hz.
-         The sample rate  is the number of samples per second in the audio file.
-         """
-         waveform, sr = torchaudio.load(file)
+        sr: the sample rate of the audio file, in Hz.
+        The sample rate  is the number of samples per second in the audio file.
+        """
+        waveform, sr = torchaudio.load(file)
 
-         waveform = self._mix_down_if_necessary(waveform)
+        waveform = self._mix_down_if_necessary(waveform)
 
-         # print(waveform.shape)
-         # data = waveform.numpy()
-         # plt.figure(figsize=(15, 4))
-         # plt.subplot(1, 2, 1)
-         # librosa.display.waveshow(data, sr=sr)
-         #
-         # plt.title('before resample')
-         # plt.show()
-         # print(waveform)
-         if sr != bundle.sample_rate:
-             waveform = torchaudio.functional.resample(waveform, sr, bundle.sample_rate)
-         data = waveform.numpy()
-         # plt.figure(figsize=(15, 4))
-         # plt.subplot(1, 2, 1)
-         # librosa.display.waveshow(data, sr=sr)
-         # plt.title('before resample')
-         # plt.show()
+        # print(waveform.shape)
+        # data = waveform.numpy()
+        # plt.figure(figsize=(15, 4))
+        # plt.subplot(1, 2, 1)
+        # librosa.display.waveshow(data, sr=sr)
+        #
+        # plt.title('before resample')
+        # plt.show()
+        # print(waveform)
 
-         # print(waveform)
-         # todo what this part do ?
-         waveform_len = len(waveform)
-         half_sec = int(0.5 * sr)  # shift 0.5 sec
-         wave = np.array(waveform[0].numpy())
-         waveform_homo = np.zeros((int(sample_rate * 3, )))
-         waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
+        """ If the sample rate of the signal is not 16,000, resample."""
+        if sr != bundle.sample_rate:
+            waveform = torchaudio.functional.resample(waveform, sr, bundle.sample_rate)
+        data = waveform.numpy()
+        # plt.figure(figsize=(15, 4))
+        # plt.subplot(1, 2, 1)
+        # librosa.display.waveshow(data, sr=sr)
+        # plt.title('before resample')
+        # plt.show()
 
-         # plt.figure(figsize=(15, 4))
-         # plt.subplot(1, 2, 1)
-         # librosa.display.waveshow(waveform_homo, sr=sr)
-         # plt.title('after resample')
-         # plt.show()
+        # print(waveform)
+        # todo what this part do ?
+        waveform_len = len(waveform)
+        half_sec = int(0.5 * sr)  # shift 0.5 sec
+        wave = np.array(waveform[0].numpy())
+        waveform_homo = np.zeros((int(sample_rate * 3, )))
+        waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
+        print("HOMO")
 
-         # return a single file's waveform
-         # print(waveform_homo.shape)
-         # print(waveform[0])
-         return waveform_homo
+        # plt.figure(figsize=(15, 4))
+        # plt.subplot(1, 2, 1)
+        # librosa.display.waveshow(waveform_homo, sr=sr)
+        # plt.title('after resample')
+        # plt.show()
 
+        # return a single file's waveform
+        # print(waveform_homo.shape)
+        # print(waveform[0])
+        return waveform_homo
+
+    """ -------------- Methods for CSV -------------- """
 
     def _get_audio_sample_path(self, index):
         """
@@ -106,6 +119,16 @@ class DataManagement(Dataset):
         path = self.annotations.iloc[index, 1]
         return path
 
+    def _get_audio_sample_label(self, index):
+        """
+         # getting the value of the cell from the csv file
+         # row is the index
+         # column is 1"
+        """
+        label = self.annotations.iloc[index, 3]
+        return label
+
+    """ --------------------  Methods for Signal Preprocess -------------------- """
 
     def _mix_down_if_necessary(self, signal):
         """
@@ -118,7 +141,9 @@ class DataManagement(Dataset):
 
 if __name__ == '__main__':
     dm = DataManagement()
-    i = 0
-    while i < dm.__len__():
-        dm.__getitem__(i)
-        i += 1
+    waveforms, emotions = dm.load_data()
+    print(waveforms.numpy())
+    # i = 0
+    # while i < dm.__len__():
+    #     dm.__getitem__(i)
+    #     i += 1
