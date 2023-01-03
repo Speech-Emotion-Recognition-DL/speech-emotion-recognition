@@ -201,7 +201,7 @@ if __name__ == "__main__":
     train_dataloader, test_dataloader = create_data_loader(usd, BATCH_SIZE)
 
     # construct model and assign it to device
-    cnn = Convolutional_Neural_Network().to(device)
+    cnn = Convolutional_Speaker_Identification().to(device)
     #cnn = Convolutional_Neural_Network().to(device)
     ##cnn = ConvNet().to(device)
     # cnn = Convolutional_Speaker_Identification().to(device)

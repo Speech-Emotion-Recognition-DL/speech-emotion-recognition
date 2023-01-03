@@ -106,7 +106,7 @@ class SoundDataset(Dataset):
 
         # Loads an audio file at a particular index within the dataset
         audio_sample_path = self._get_audio_sample_path(index)
-        print(audio_sample_path)
+        # print(audio_sample_path)
         label = self._get_audio_sample_label(index)
 
         signal, sample_rate = torchaudio.load(audio_sample_path)
@@ -140,23 +140,23 @@ class SoundDataset(Dataset):
         # self.plot_waveform(signal, sample_rate)
         # self.plot_specgram(signal, sample_rate)
 
-        duration = signal.shape[1] / sample_rate
-        # print(f"The signal has a duration of {duration:.2f} seconds.")
-
-
-        if duration < 2:
-            signal = signal.repeat(1, 2)
-
-        # Trim the signal to the first 2 seconds
-        start_time = 0
-        end_time = 2
-        start_index = int(start_time * sample_rate)
-        end_index = int(end_time * sample_rate)
-        signal = signal.narrow(1, start_index, end_index - start_index)
-        # Save the trimmed signal to a new audio file
-        # torchaudio.save("trimmed_audio.wav", signal, sample_rate)
-
-        duration = signal.shape[1] / sample_rate
+        # duration = signal.shape[1] / sample_rate
+        # # print(f"The signal has a duration of {duration:.2f} seconds.")
+        #
+        #
+        # if duration < 2:
+        #     signal = signal.repeat(1, 2)
+        #
+        # # Trim the signal to the first 2 seconds
+        # start_time = 0
+        # end_time = 2
+        # start_index = int(start_time * sample_rate)
+        # end_index = int(end_time * sample_rate)
+        # signal = signal.narrow(1, start_index, end_index - start_index)
+        # # Save the trimmed signal to a new audio file
+        # # torchaudio.save("trimmed_audio.wav", signal, sample_rate)
+        #
+        # duration = signal.shape[1] / sample_rate
         # print(f"The signal has a duration of {duration:.2f} seconds.")
 
         # transforming the signal(waveform) into mel
@@ -191,7 +191,6 @@ class SoundDataset(Dataset):
             emission, _ = self.model(signal)
 
 
-        print(emission.shape)
         # print(emission.shape)
         # plt.imshow(emission[0].cpu().T)
         # plt.title("Classification result")

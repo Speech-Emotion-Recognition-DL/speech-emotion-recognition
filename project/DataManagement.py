@@ -2,12 +2,13 @@ from torch.utils.data import Dataset
 import numpy as np
 import torch
 import torchaudio
-# import torch.nn as nn
+
 import pandas as pd
 import matplotlib.pyplot as plt
 # import librosa
 # import librosa.display
 import warnings
+from sklearn.preprocessing import StandardScaler
 
 from project import create_csv
 
@@ -183,6 +184,30 @@ class DataManagement:
 
         return waveform_homo
 
+    def tensor_4D(self, X_, features, Y):
+        # print()
+        # print(X.shape)
+        X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
+        # print(X.shape)
+        X_ = np.squeeze(X_, axis=1)
+        # print(X.shape)
+        # convert emotion labels from list back to numpy arrays for PyTorch to work with
+        Y = np.array(Y)
+        # print(Y)
+        return X_, Y
+
+    def feature_Scaling(self, X_train):
+        scaler = StandardScaler()
+
+        N, C, H, W = X_train.shape
+
+        X_train = np.reshape(X_train, (N, -1))
+        X_train = scaler.fit_transform(X_train)
+
+        # Transform back to NxCxHxW 4D tensor format
+        X_train = np.reshape(X_train, (N, C, H, W))
+        return X_train
+
     def plot_emission(self, emission):
         # plot the classification results
         plt.imshow(emission[0].cpu().T)
@@ -221,6 +246,29 @@ class DataManagement:
             signal = torch.mean(signal, dim=0, keepdim=True)
         return signal
 
+    def get(self):
+        waveforms, emotions = self.load_data()
+        train_XY, valid_XY, test_XY = self.split_data(waveforms, emotions)
+        train_X = train_XY[0]
+        valid_X = valid_XY[0]
+        test_X = test_XY[0]
+        train_Y = train_XY[1]
+        valid_Y = valid_XY[1]
+        test_Y = test_XY[1]
+        features_train_X = self.feature_extraction(train_X)
+        features_valid_X = self.feature_extraction(valid_X)
+        features_test_X = self.feature_extraction(test_X)
+
+        train_X, train_Y = self.tensor_4D(train_X, features_train_X, train_Y)
+        valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y)
+        test_X, test_Y = self.tensor_4D(test_X, features_test_X, test_Y)
+
+        train_X = self.feature_Scaling(train_X)
+        valid_X = self.feature_Scaling(valid_X)
+        test_X = self.feature_Scaling(test_X)
+
+        return train_X, train_Y, valid_X, valid_Y, test_X, test_Y
+
 
 if __name__ == '__main__':
     dm = DataManagement()
@@ -236,8 +284,21 @@ if __name__ == '__main__':
     train_X = train_XY[0]
     valid_X = valid_XY[0]
     test_X = test_XY[0]
+    train_Y = train_XY[1]
+    valid_Y = valid_XY[1]
+    test_Y = test_XY[1]
 
-    features = dm.feature_extraction(train_X)
-    print()
-    print(features[0].shape)
-    dm.plot_emission(features[0])
+    features_train_X = dm.feature_extraction(train_X)
+    features_valid_X = dm.feature_extraction(valid_X)
+    features_test_X = dm.feature_extraction(test_X)
+
+    train_X, train_Y = dm.tensor_4D(train_X, features_train_X, train_Y)
+    valid_X, valid_Y = dm.tensor_4D(valid_X, features_valid_X, valid_Y)
+    test_X, test_Y = dm.tensor_4D(test_X, features_test_X, test_Y)
+
+    train_X = dm.feature_Scaling(train_X)
+    valid_X = dm.feature_Scaling(valid_X)
+    test_X = dm.feature_Scaling(test_X)
+
+    print(
+        f'Shape of 4D feature array for input tensor: {train_X.shape} train, {valid_X.shape} validation, {test_X.shape} test')

@@ -48,23 +48,27 @@ class Convolutional_Neural_Network(nn.Module):
         self.flatten = nn.Flatten()
         #self.dense_1 = nn.Linear(35328, 1024)
         # self.dense_1 = nn.Linear(11776, 1024)
-        self.dense_1 = nn.Linear(11776, 1024)
+        self.dense_1 = nn.Linear(8192, 1024)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
         self.dense_2 = nn.Linear(1024, 3)
 
     def forward(self, X):
-        #print(X.shape)  # batch_size, channels, height, width = x.shape
-
+        print(X.shape)  # batch_size, channels, height, width = x.shape
+        print("conv 1")
         x = nn.ReLU()(self.conv_2d_1(X))
+        print(x.shape)
         x = self.bn_1(x)
+        print(x.shape)
+        print("conv 2")
         x = nn.ReLU()(self.conv_2d_2(x))
+        print(x.shape)
         x = self.bn_2(x)
+        print(x.shape)
         x = self.max_pool_2d_1(x)
+        print(x.shape)
 
-        # print(x.shape)
-
-        x = self.max_pool_2d_2(x)
+        #x = self.max_pool_2d_2(x)
 
         # print(x.shape)
 
@@ -76,26 +80,27 @@ class Convolutional_Neural_Network(nn.Module):
         # x = nn.ReLU()(self.conv_2d_4(x))
         # x = self.bn_4(x)
 
-        # # print(x.shape)
+        print("po ",x.shape)
 
         x = nn.ReLU()(self.conv_2d_5(x))
+        print("po1 ", x.shape)
         x = self.bn_5(x)
 
-        # print(x.shape)
+        print(x.shape)
 
         x = nn.ReLU()(self.conv_2d_6(x))
-        # print(x.shape)
+        print("po 3 " , x.shape)
         x = self.drop_1(x)
         # x = self.global_avg_pooling_2d(x)
-        # print(x.shape)
+        print(x.shape)
         # x = self.max_pool_2d_3(x)
         # x = x.view(-1, x.shape[1])  # output channel for flatten before entering the dense layer
         x = self.flatten(x)
 
-        # print(x.shape)
+        print("flatt" ,x.shape)
 
         x = nn.ReLU()(self.dense_1(x))
-        # print(x.shape)
+        print("relu ",x.shape)
         x = self.drop_2(x)
 
         # print(x.shape)
@@ -127,5 +132,5 @@ if __name__ == "__main__":
     cnn = Convolutional_Neural_Network()
     # summary(cnn, (1, 64, 44))
 
-    summary(cnn.cuda(), (1, 99, 768))  # the shape of the signal
+    summary(cnn.cuda(), (1, 149, 29))  # the shape of the signal
     # summary(cnn.cuda(), (1, 68, 29

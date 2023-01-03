@@ -56,48 +56,53 @@ class Convolutional_Speaker_Identification(nn.Module):
         x = nn.ReLU()(self.conv_2d_1(X))
         print(x.shape)
         x = self.bn_1(x)
-        print(x.shape)
+
         x = self.max_pool_2d_1(x)
-        print(x.shape)
+
 
         x = nn.ReLU()(self.conv_2d_2(x))
         print(x.shape)
         x = self.bn_2(x)
         print(x.shape)
         x = self.max_pool_2d_2(x)
-        print(x.shape)
 
 
         x = nn.ReLU()(self.conv_2d_3(x))
-        print(x.shape)
+
 
         x = self.bn_3(x)
-        print(x.shape)
+
 
 
         x = nn.ReLU()(self.conv_2d_4(x))
-        print(x.shape)
+
 
         x = self.bn_4(x)
-        print(x.shape)
+
 
         x = nn.ReLU()(self.conv_2d_5(x))
-        print(x.shape)
+
         x = self.bn_5(x)
-        print(x.shape)
+
         x = self.max_pool_2d_3(x)
-        print(x.shape)
+
 
         x = nn.ReLU()(self.conv_2d_6(x))
-        print("2 ", x.shape)
+
         x = self.drop_1(x)
+
         x = self.global_avg_pooling_2d(x)
 
+
+
         x = x.view(-1, x.shape[1])  # output channel for flatten before entering the dense layer
+
         x = nn.ReLU()(self.dense_1(x))
+
         x = self.drop_2(x)
 
         x = self.dense_2(x)
+
         y = nn.LogSoftmax(dim=1)(x)   # consider using Log-Softmax
 
         return y
@@ -117,7 +122,7 @@ class Convolutional_Speaker_Identification(nn.Module):
 if __name__ == "__main__":
     cnn = Convolutional_Speaker_Identification()
     # summary(cnn, (1, 64, 44))
-    summary(cnn.cuda(), (1, 149, 768))
+    summary(cnn.cuda(), (1, 149, 29))
 
 """
 ├─Conv2d: 1-1                            [-1, 96, 73, 382]         4,800
