@@ -9,7 +9,7 @@ import seaborn as sn
 import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 150
+num_epochs = 250
 # pick minibatch size (of 32... always)
 minibatch = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -228,3 +228,39 @@ if __name__ == '__main__':
     sn.heatmap(confmatrix_df_norm, annot=True, annot_kws={"size": 13})  # annot_kws is value font
 
     plt.show()
+
+    # Save train_X
+    torch.save(train_X, 'train_X.pt')
+
+    # Save train_Y
+    torch.save(train_Y, 'train_Y.pt')
+
+    # Save valid_X
+    torch.save(valid_X, 'valid_X.pt')
+
+    # Save valid_Y
+    torch.save(valid_Y, 'valid_Y.pt')
+
+    # Save test_X
+    torch.save(test_X, 'test_X.pt')
+
+    # Save test_Y
+    torch.save(test_Y, 'test_Y.pt')
+
+    # # Load train_X
+    # train_X = torch.load('train_X.pt')
+    #
+    # # Load train_Y
+    # train_Y = torch.load('train_Y.pt')
+    #
+    # # Load valid_X
+    # valid_X = torch.load('valid_X.pt')
+    #
+    # # Load valid_Y
+    # valid_Y = torch.load('valid_Y.pt')
+    #
+    # # Load test_X
+    # test_X = torch.load('test_X.pt')
+    #
+    # # Load test_Y
+    # test_Y = torch.load('test_Y.pt')
