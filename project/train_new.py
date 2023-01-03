@@ -3,21 +3,29 @@ import torch.nn as nn
 from DataManagement import DataManagement, ANNOTATIONS_FILE
 from cnn_model import Convolutional_Neural_Network
 import numpy as np
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
 import matplotlib.pyplot as plt
-
+from cnn_model_definition import Convolutional_Speaker_Identification
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 50
+num_epochs = 150
 # pick minibatch size (of 32... always)
 minibatch = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # instantiate lists to hold scalar performance metrics to plot later
 train_losses = []
 valid_losses = []
+emotions_dict_3 = {
+    0: 'positive',
+    1: 'neutral',
+    2: 'negative',
+}
 
 
 def criterion(predictions, targets):
     """ Loss/Criterion"""
-    return nn.CrossEntropyLoss(input=predictions, targets=targets)
+    return nn.CrossEntropyLoss()(input=predictions, target=targets)
 
 
 # create training loop for one complete epoch (entire training set)
@@ -86,7 +94,7 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
             f'\nEpoch {epoch} --- loss:{epoch_loss:.3f}, Epoch accuracy:{epoch_acc:.2f}%, Validation loss:{valid_loss:.3f}, Validation accuracy:{valid_acc:.2f}%')
 
 
-def train_step(model, criterion, optimizer):
+def make_train_step(model, criterion, optimizer):
     # define the training step of the training phase
     def train_step(X, Y):
         # print(X.shape)
@@ -129,7 +137,7 @@ def validate_fnc(model, criterion):
             accuracy = torch.sum(Y == predictions) / float(len(Y))
 
             # compute error from logits (nn.crossentropy implements softmax)
-            loss = criterion(output_logits, Y)
+            loss = criterion(output_logits,Y)
 
         return loss.item(), accuracy * 100, predictions
 
@@ -137,13 +145,13 @@ def validate_fnc(model, criterion):
 
 
 if __name__ == '__main__':
+    print()
     dm = DataManagement()
     train_X, train_Y, valid_X, valid_Y, test_X, test_Y = dm.get()
 
-    print(train_X.shape)
 
     # DNN model
-    model = Convolutional_Neural_Network().to(device)
+    model = Convolutional_Speaker_Identification().to(device)
     # chosen optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-3, momentum=0.8)
 
@@ -151,7 +159,7 @@ if __name__ == '__main__':
     train_size = train_X.shape[0]
 
     # instantiate the training step function
-    train_step = train_step(model, criterion, optimizer)
+    train_step = make_train_step(model, criterion, optimizer)
 
     # instantiate the validation loop function
     validate = validate_fnc(model, criterion)
@@ -169,4 +177,54 @@ if __name__ == '__main__':
     plt.plot(train_losses[:], 'b')
     plt.plot(valid_losses[:], 'r')
     plt.legend(['Training loss', 'Validation loss'])
+    plt.show()
+
+    # Save the model
+    torch.save(model.cuda().state_dict(), 'model.pt')
+
+
+
+    # Convert 4D test feature set array to tensor and move to GPU
+    X_test_tensor = torch.tensor(test_X, device=device).float()
+    # Convert 4D test label set array to tensor and move to GPU
+    y_test_tensor = torch.tensor(test_Y, dtype=torch.long, device=device)
+    # Move the model's weights to the specified device
+    model.to(device)
+
+    # Reinitialize the validation function with the updated model
+    validate = validate_fnc(model, criterion)
+
+    # Get the model's performance metrics using the validation function we defined
+    test_loss, test_acc, predicted_emotions = validate(X_test_tensor, y_test_tensor)
+
+    print(f'Test accuracy is {test_acc:.2f}%')
+
+
+
+    # because model tested on GPU, move prediction tensor to CPU then convert to array
+    predicted_emotions = predicted_emotions.cpu().numpy()
+    # use labels from test set
+    emotions_groundtruth = test_Y
+
+    # build confusion matrix and normalized confusion matrix
+    conf_matrix = confusion_matrix(emotions_groundtruth, predicted_emotions)
+    conf_matrix_norm = confusion_matrix(emotions_groundtruth, predicted_emotions, normalize='true')
+
+    # set labels for matrix axes from emotions
+    emotion_names = [emotion for emotion in emotions_dict_3.values()]
+
+    # make a confusion matrix with labels using a DataFrame
+    confmatrix_df = pd.DataFrame(conf_matrix, index=emotion_names, columns=emotion_names)
+    confmatrix_df_norm = pd.DataFrame(conf_matrix_norm, index=emotion_names, columns=emotion_names)
+
+    # plot confusion matrices
+    plt.figure(figsize=(16, 6))
+    sn.set(font_scale=1.8)  # emotion label and title size
+    plt.subplot(1, 2, 1)
+    plt.title('Confusion Matrix')
+    sn.heatmap(confmatrix_df, annot=True, annot_kws={"size": 18})  # annot_kws is value font
+    plt.subplot(1, 2, 2)
+    plt.title('Normalized Confusion Matrix')
+    sn.heatmap(confmatrix_df_norm, annot=True, annot_kws={"size": 13})  # annot_kws is value font
+
     plt.show()

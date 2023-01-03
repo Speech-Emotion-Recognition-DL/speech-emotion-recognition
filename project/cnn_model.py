@@ -40,13 +40,13 @@ class Convolutional_Neural_Network(nn.Module):
         self.bn_5 = nn.BatchNorm2d(128)
         self.max_pool_2d_3 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2))
 
-        #self.conv_2d_6 = nn.Conv2d(128, 256, kernel_size=(3, 1), padding=0)
+        # self.conv_2d_6 = nn.Conv2d(128, 256, kernel_size=(3, 1), padding=0)
         self.conv_2d_6 = nn.Conv2d(128, 256, kernel_size=(2, 1), padding=0)
         self.drop_1 = nn.Dropout(p=DROP_OUT)
 
         # self.global_avg_pooling_2d = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
-        #self.dense_1 = nn.Linear(35328, 1024)
+        # self.dense_1 = nn.Linear(35328, 1024)
         # self.dense_1 = nn.Linear(11776, 1024)
         self.dense_1 = nn.Linear(8192, 1024)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
@@ -54,21 +54,21 @@ class Convolutional_Neural_Network(nn.Module):
         self.dense_2 = nn.Linear(1024, 3)
 
     def forward(self, X):
-        print(X.shape)  # batch_size, channels, height, width = x.shape
-        print("conv 1")
+        # print(X.shape)  # batch_size, channels, height, width = x.shape
+        # print("conv 1")
         x = nn.ReLU()(self.conv_2d_1(X))
-        print(x.shape)
+        # print(x.shape)
         x = self.bn_1(x)
-        print(x.shape)
-        print("conv 2")
+        # print(x.shape)
+        # print("conv 2")
         x = nn.ReLU()(self.conv_2d_2(x))
-        print(x.shape)
+        # print(x.shape)
         x = self.bn_2(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.max_pool_2d_1(x)
-        print(x.shape)
+        # print(x.shape)
 
-        #x = self.max_pool_2d_2(x)
+        # x = self.max_pool_2d_2(x)
 
         # print(x.shape)
 
@@ -80,27 +80,27 @@ class Convolutional_Neural_Network(nn.Module):
         # x = nn.ReLU()(self.conv_2d_4(x))
         # x = self.bn_4(x)
 
-        print("po ",x.shape)
+        # print("po ",x.shape)
 
         x = nn.ReLU()(self.conv_2d_5(x))
-        print("po1 ", x.shape)
+        # print("po1 ", x.shape)
         x = self.bn_5(x)
 
-        print(x.shape)
+        # print(x.shape)
 
         x = nn.ReLU()(self.conv_2d_6(x))
-        print("po 3 " , x.shape)
+        # print("po 3 " , x.shape)
         x = self.drop_1(x)
         # x = self.global_avg_pooling_2d(x)
-        print(x.shape)
+        # print(x.shape)
         # x = self.max_pool_2d_3(x)
         # x = x.view(-1, x.shape[1])  # output channel for flatten before entering the dense layer
         x = self.flatten(x)
 
-        print("flatt" ,x.shape)
+        # print("flatt" ,x.shape)
 
         x = nn.ReLU()(self.dense_1(x))
-        print("relu ",x.shape)
+        # print("relu ",x.shape)
         x = self.drop_2(x)
 
         # print(x.shape)
@@ -113,7 +113,7 @@ class Convolutional_Neural_Network(nn.Module):
         activation = nn.Softmax(dim=1)
         y = activation(x)
 
-        return y
+        return x, y
 
     def get_epochs(self):
         return 3

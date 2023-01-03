@@ -6,6 +6,7 @@ from torch import nn
 import constants as c
 import torch
 from torchsummary import summary
+
 DROP_OUT = 0.5
 DIMENSION = 512 * 300
 
@@ -16,7 +17,6 @@ class Convolutional_Speaker_Identification(nn.Module):
         return (stride_size * (new_shape - 1) + kernel_size - old_shape) / 2
 
     def __init__(self):
-
         super().__init__()
 
         self.conv_2d_1 = nn.Conv2d(in_channels=1,
@@ -50,35 +50,27 @@ class Convolutional_Speaker_Identification(nn.Module):
 
         self.dense_2 = nn.Linear(1024, 3)
 
-
     def forward(self, X):
-        print(X.shape)
+        # print(X.shape)
         x = nn.ReLU()(self.conv_2d_1(X))
-        print(x.shape)
+        # print(x.shape)
         x = self.bn_1(x)
 
         x = self.max_pool_2d_1(x)
 
-
         x = nn.ReLU()(self.conv_2d_2(x))
-        print(x.shape)
+        # print(x.shape)
         x = self.bn_2(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.max_pool_2d_2(x)
-
 
         x = nn.ReLU()(self.conv_2d_3(x))
 
-
         x = self.bn_3(x)
-
-
 
         x = nn.ReLU()(self.conv_2d_4(x))
 
-
         x = self.bn_4(x)
-
 
         x = nn.ReLU()(self.conv_2d_5(x))
 
@@ -86,14 +78,11 @@ class Convolutional_Speaker_Identification(nn.Module):
 
         x = self.max_pool_2d_3(x)
 
-
         x = nn.ReLU()(self.conv_2d_6(x))
 
         x = self.drop_1(x)
 
         x = self.global_avg_pooling_2d(x)
-
-
 
         x = x.view(-1, x.shape[1])  # output channel for flatten before entering the dense layer
 
@@ -103,9 +92,9 @@ class Convolutional_Speaker_Identification(nn.Module):
 
         x = self.dense_2(x)
 
-        y = nn.LogSoftmax(dim=1)(x)   # consider using Log-Softmax
+        y = nn.LogSoftmax(dim=1)(x)  # consider using Log-Softmax
 
-        return y
+        return x, y
 
     def get_epochs(self):
         return 3
@@ -119,10 +108,11 @@ class Convolutional_Speaker_Identification(nn.Module):
     def to_string(self):
         return "Convolutional_Speaker_Identification_Log_Softmax_Model-epoch_"
 
+
 if __name__ == "__main__":
     cnn = Convolutional_Speaker_Identification()
     # summary(cnn, (1, 64, 44))
-    summary(cnn.cuda(), (1, 149, 29))
+    summary(cnn.cuda(), (1, 149, 768))
 
 """
 ├─Conv2d: 1-1                            [-1, 96, 73, 382]         4,800

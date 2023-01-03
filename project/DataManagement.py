@@ -16,8 +16,8 @@ warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-# bundle = torchaudio.pipelines.WAV2VEC2_BASE
-bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+bundle = torchaudio.pipelines.WAV2VEC2_BASE
+#bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
 
 model = bundle.get_model().to(device)
 sample_rate = bundle.sample_rate
