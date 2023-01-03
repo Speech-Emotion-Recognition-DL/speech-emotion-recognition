@@ -248,13 +248,17 @@ class DataManagement:
 
     def get(self):
         waveforms, emotions = self.load_data()
+
         train_XY, valid_XY, test_XY = self.split_data(waveforms, emotions)
+
         train_X = train_XY[0]
         valid_X = valid_XY[0]
         test_X = test_XY[0]
+
         train_Y = train_XY[1]
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
+
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
@@ -271,34 +275,35 @@ class DataManagement:
 
 
 if __name__ == '__main__':
-    dm = DataManagement()
-    waveforms, emotions = dm.load_data()
-
-    print(f'Waveforms set: {len(waveforms)} samples')
-    # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
-    print(f'Waveform signal length: {len(waveforms[0])}')
-    print(f'Emotions set: {len(emotions)} sample labels')
-
-    train_XY, valid_XY, test_XY = dm.split_data(waveforms, emotions)
-
-    train_X = train_XY[0]
-    valid_X = valid_XY[0]
-    test_X = test_XY[0]
-    train_Y = train_XY[1]
-    valid_Y = valid_XY[1]
-    test_Y = test_XY[1]
-
-    features_train_X = dm.feature_extraction(train_X)
-    features_valid_X = dm.feature_extraction(valid_X)
-    features_test_X = dm.feature_extraction(test_X)
-
-    train_X, train_Y = dm.tensor_4D(train_X, features_train_X, train_Y)
-    valid_X, valid_Y = dm.tensor_4D(valid_X, features_valid_X, valid_Y)
-    test_X, test_Y = dm.tensor_4D(test_X, features_test_X, test_Y)
-
-    train_X = dm.feature_Scaling(train_X)
-    valid_X = dm.feature_Scaling(valid_X)
-    test_X = dm.feature_Scaling(test_X)
-
-    print(
-        f'Shape of 4D feature array for input tensor: {train_X.shape} train, {valid_X.shape} validation, {test_X.shape} test')
+    pass
+    # dm = DataManagement()
+    # waveforms, emotions = dm.load_data()
+    #
+    # print(f'Waveforms set: {len(waveforms)} samples')
+    # # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
+    # print(f'Waveform signal length: {len(waveforms[0])}')
+    # print(f'Emotions set: {len(emotions)} sample labels')
+    #
+    # train_XY, valid_XY, test_XY = dm.split_data(waveforms, emotions)
+    #
+    # train_X = train_XY[0]
+    # valid_X = valid_XY[0]
+    # test_X = test_XY[0]
+    # train_Y = train_XY[1]
+    # valid_Y = valid_XY[1]
+    # test_Y = test_XY[1]
+    #
+    # features_train_X = dm.feature_extraction(train_X)
+    # features_valid_X = dm.feature_extraction(valid_X)
+    # features_test_X = dm.feature_extraction(test_X)
+    #
+    # train_X, train_Y = dm.tensor_4D(train_X, features_train_X, train_Y)
+    # valid_X, valid_Y = dm.tensor_4D(valid_X, features_valid_X, valid_Y)
+    # test_X, test_Y = dm.tensor_4D(test_X, features_test_X, test_Y)
+    #
+    # train_X = dm.feature_Scaling(train_X)
+    # valid_X = dm.feature_Scaling(valid_X)
+    # test_X = dm.feature_Scaling(test_X)
+    #
+    # print(
+    #     f'Shape of 4D feature array for input tensor: {train_X.shape} train, {valid_X.shape} validation, {test_X.shape} test')

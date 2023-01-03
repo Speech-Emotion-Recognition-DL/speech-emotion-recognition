@@ -4,6 +4,7 @@ from DataManagement import DataManagement, ANNOTATIONS_FILE
 from cnn_model import Convolutional_Neural_Network
 import numpy as np
 import matplotlib.pyplot as plt
+
 # choose number of epochs higher than reasonable so we can manually stop training
 num_epochs = 50
 # pick minibatch size (of 32... always)
@@ -137,20 +138,16 @@ def validate_fnc(model, criterion):
 
 if __name__ == '__main__':
     dm = DataManagement()
-    dm.get()
-    train_X = dm.get()[0]
-    train_Y = dm.get()[1]
-    valid_X = dm.get()[2]
-    valid_Y = dm.get()[3]
-    test_X = dm.get()[4]
-    test_Y = dm.get()[5]
+    train_X, train_Y, valid_X, valid_Y, test_X, test_Y = dm.get()
 
-    print(train_X.shpe)
+    print(train_X.shape)
 
+    # DNN model
     model = Convolutional_Neural_Network().to(device)
+    # chosen optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-3, momentum=0.8)
 
-    # get traing set size to calculate iteration and minibatch indices
+    # get training set size to calculate iteration and minibatch indices
     train_size = train_X.shape[0]
 
     # instantiate the training step function
@@ -163,7 +160,7 @@ if __name__ == '__main__':
     train_losses = []
     valid_losses = []
 
-    # train it!
+    # train it! - YAY
     train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size)
 
     plt.title('Loss Curve for Convolutional_Neural_Network Model')
