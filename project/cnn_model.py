@@ -47,11 +47,11 @@ class Convolutional_Neural_Network(nn.Module):
         # self.global_avg_pooling_2d = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
         #self.dense_1 = nn.Linear(35328, 1024)
+        # self.dense_1 = nn.Linear(11776, 1024)
         self.dense_1 = nn.Linear(11776, 1024)
-
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
-        self.dense_2 = nn.Linear(1024, 8)
+        self.dense_2 = nn.Linear(1024, 3)
 
     def forward(self, X):
         #print(X.shape)  # batch_size, channels, height, width = x.shape
