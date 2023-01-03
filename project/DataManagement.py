@@ -46,7 +46,7 @@ class DataManagement:
             waveform = self.signal(audio_sample_path)
             waveforms.append(waveform)
             index += 1
-        
+
         return waveforms, emotions
 
     def split_data(self):
