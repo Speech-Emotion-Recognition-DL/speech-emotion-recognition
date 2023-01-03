@@ -5,9 +5,11 @@ import torchaudio
 # import torch.nn as nn
 import pandas as pd
 import matplotlib.pyplot as plt
-import librosa
-import librosa.display
+# import librosa
+# import librosa.display
 import warnings
+
+from project import create_csv
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
@@ -39,6 +41,7 @@ class DataManagement:
             """
         waveforms = []
         emotions = []
+
         index = 0
         while index < self.__len__():
             # get the path from CSV
@@ -56,7 +59,7 @@ class DataManagement:
         print()
         return waveforms, emotions
 
-    def split_data(self):
+    def split_data(self, waveforms, emotions):
 
         # lists that will contain data extracted from signals
         X_train, X_valid, X_test = [], [], []
@@ -65,13 +68,62 @@ class DataManagement:
 
         waveforms_arr = np.array(waveforms)
 
-        # add the indexes of the specific *emotion_num to emotion_indices.
-        # the output list "emotion_indices" will be a list contains all the indexes in the emotion list
-        # where the specific emotion_num appears.
+        for emotion_number in range(len(create_csv.emotions_dict_3)):
 
-        emotions_indexes = []
-        # for index, emotion in enumerate(emotions):
-        #     if emotion ==
+            # add the indexes of the specific *emotion_num to emotion_indices.
+            # the output list "emotion_indices" will be a list contains all the indexes in the emotion list
+            # where the specific emotion_num appears.
+
+            emotions_indexes = []
+            for index, emotion in enumerate(emotions):
+                if emotion == emotion_number:
+                    emotions_indexes.append(index)
+
+            # shuffle emotion indexes list
+            np.random.seed(69)
+            emotions_indexes = np.random.permutation(emotions_indexes)
+
+            # store the length of emotion indexes list
+            emotion_t_len = len(emotions_indexes)
+
+            # split and store all the emotion indexes for train/val/test as 80/10/10.
+            # train is 80% of data
+            train_indexes = emotions_indexes[:int(0.8 * emotion_t_len)]
+            # validation is 80% - 90% of the data
+            val_indexes = emotions_indexes[int(0.8 * emotion_t_len): int(0.9 * emotion_t_len)]
+            # test is 90% to 100% of the data
+            test_indexes = emotions_indexes[int(0.9 * emotion_t_len):]
+
+            """ For each X,Y train/val/test,
+                we add the correlated data from waveforms depend of the indexes we extracted before
+                 """
+            X_train.append(waveforms[train_indexes, :])
+            Y_train.append(np.array([emotion_number] * len(train_indexes), dtype=np.int32))
+
+            X_valid.append(waveforms[val_indexes, :])
+            Y_valid.append(np.array([emotion_number] * len(val_indexes), dtype=np.int32))
+
+            X_test.append(waveforms[test_indexes, :])
+            Y_test.append(np.array([emotion_number] * len(test_indexes), dtype=np.int32))
+
+        """ concatenate all the waveforms we added each time to the X train/valid/test to one array"""
+        X_train = np.concatenate(X_train, axis=0)
+        X_valid = np.concatenate(X_valid, axis=0)
+        X_test = np.concatenate(X_test, axis=0)
+
+        """ concatenate all the emotions we added each time to the Y train/valid/test to one array """
+        Y_train = np.concatenate(Y_train, axis=0)
+        Y_valid = np.concatenate(Y_valid, axis=0)
+        Y_test = np.concatenate(Y_test, axis=0)
+
+        # check shape of each set
+        print(f'Training waveforms:{X_train.shape}, y_train:{Y_train.shape}')
+        print(f'Validation waveforms:{X_valid.shape}, y_valid:{Y_valid.shape}')
+        print(f'Test waveforms:{X_test.shape}, y_test:{Y_test.shape}')
+
+        return (X_train, Y_train), (X_valid, Y_valid), (X_test, Y_test)
+
+
 
     def signal(self, file):
         """
@@ -141,3 +193,5 @@ if __name__ == '__main__':
     # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
     print(f'Waveform signal length: {len(waveforms[0])}')
     print(f'Emotions set: {len(emotions)} sample labels')
+
+    train, valid, test = dm.split_data(waveforms, emotions)

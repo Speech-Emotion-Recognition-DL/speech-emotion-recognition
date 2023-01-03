@@ -14,6 +14,11 @@ emotions_dict = {
     6: 'fearful',
     7: 'disgust'
 }
+emotions_dict_3 = {
+    0: 'positive',
+    1: 'neutral',
+    2: 'negative',
+}
 
 """
 SAVEE:
