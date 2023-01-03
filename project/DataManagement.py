@@ -31,10 +31,15 @@ class DataManagement:
         return len(self.annotations)
 
     def load_data(self):
+        """ In this method, we load the data that we will be used from the model,
+            The data path & labels is depend on our CSV that we built before,
+            Iterate on all the data in CSV by index from total length of the CSV,
+            take each label and extract each correlate signal(via signal() method ) to fill emotions and waveforms lists
+            Return tuple of (Waveforms ,Emotion).
+            """
         waveforms = []
         emotions = []
         index = 0
-        # print(self.__len__())
         while index < self.__len__():
             # get the path from CSV
             audio_sample_path = self._get_audio_sample_path(index)
@@ -45,12 +50,28 @@ class DataManagement:
             # get the waveform from the audio file via torch_audio.load
             waveform = self.signal(audio_sample_path)
             waveforms.append(waveform)
+            print('\r' + f"Num of waveforms: {index + 1}/{self.__len__()}", end='')
             index += 1
-        
+
+        print()
         return waveforms, emotions
 
     def split_data(self):
-        pass
+
+        # lists that will contain data extracted from signals
+        X_train, X_valid, X_test = [], [], []
+        # lists that will contain labels extracted from CSV
+        Y_train, Y_valid, Y_test = [], [], []
+
+        waveforms_arr = np.array(waveforms)
+
+        # add the indexes of the specific *emotion_num to emotion_indices.
+        # the output list "emotion_indices" will be a list contains all the indexes in the emotion list
+        # where the specific emotion_num appears.
+
+        emotions_indexes = []
+        # for index, emotion in enumerate(emotions):
+        #     if emotion ==
 
     def signal(self, file):
         """
@@ -66,43 +87,19 @@ class DataManagement:
 
         waveform = self._mix_down_if_necessary(waveform)
 
-        # print(waveform.shape)
-        # data = waveform.numpy()
-        # plt.figure(figsize=(15, 4))
-        # plt.subplot(1, 2, 1)
-        # librosa.display.waveshow(data, sr=sr)
-        #
-        # plt.title('before resample')
-        # plt.show()
-        # print(waveform)
-
         """ If the sample rate of the signal is not 16,000, resample."""
         if sr != bundle.sample_rate:
             waveform = torchaudio.functional.resample(waveform, sr, bundle.sample_rate)
-        data = waveform.numpy()
-        # plt.figure(figsize=(15, 4))
-        # plt.subplot(1, 2, 1)
-        # librosa.display.waveshow(data, sr=sr)
-        # plt.title('before resample')
-        # plt.show()
 
-        # print(waveform)
-        # todo what this part do ?
-        waveform_len = len(waveform)
+        """ In RAVDESS each audio sample have quiet period time in the 0.5 first sec
+            first we take each waveform with the shifted 0.5 first sec, and then the total 3 second long further.
+            Now each sample have same length.
+            """
         half_sec = int(0.5 * sr)  # shift 0.5 sec
         wave = np.array(waveform[0].numpy())
         waveform_homo = np.zeros((int(sample_rate * 3, )))
         waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
 
-        # plt.figure(figsize=(15, 4))
-        # plt.subplot(1, 2, 1)
-        # librosa.display.waveshow(waveform_homo, sr=sr)
-        # plt.title('after resample')
-        # plt.show()
-
-        # return a single file's waveform
-        # print(waveform_homo.shape)
-        # print(waveform[0])
         return waveform_homo
 
     """ -------------- Methods for CSV -------------- """
@@ -140,4 +137,7 @@ if __name__ == '__main__':
     dm = DataManagement()
     waveforms, emotions = dm.load_data()
     print(emotions)
-
+    print(f'Waveforms set: {len(waveforms)} samples')
+    # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
+    print(f'Waveform signal length: {len(waveforms[0])}')
+    print(f'Emotions set: {len(emotions)} sample labels')

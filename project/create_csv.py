@@ -60,13 +60,13 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
         if emotions_dict.get(emotion) == 'neutral' or emotions_dict.get(emotion) == 'calm':
             train_target["emotion"].append('neutral')
-            train_target["label"].append(0)
+            train_target["label"].append(1)
 
         elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised':
             train_target["emotion"].append('positive')
-            train_target["label"].append(1)
+            train_target["label"].append(0)
         elif emotions_dict.get(emotion) == 'angry' or emotions_dict.get(emotion) == 'sad' \
-            or emotions_dict.get(emotion) == 'disgust' or  emotions_dict.get(emotion)== 'fearful':
+                or emotions_dict.get(emotion) == 'disgust' or emotions_dict.get(emotion) == 'fearful':
             train_target["emotion"].append('negative')
             train_target["label"].append(2)
 
@@ -258,11 +258,6 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     #         train_target["emotion"].append('neutral')
     #         train_target["label"].append(0)
 
-
-
-
-
-
     # #TESS dataset
     # data_path = '../project/data/TESS/*'
     # for i in glob.glob(data_path):
@@ -318,15 +313,10 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     #             train_target["label"].append(4)
     #             train_target["gender"].append("female")
 
-
-
-
-
-
-
-    #print(len(train_target["path"]),len(train_target["emotion"]), len(train_target["label"]), len(train_target["gender"]))
+    # print(len(train_target["path"]),len(train_target["emotion"]), len(train_target["label"]), len(train_target["gender"]))
     # Creating a DataFrame
     pd.DataFrame(train_target).to_csv(train_name)
+
 
 if __name__ == '__main__':
     write_data_to_csv()
