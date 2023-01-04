@@ -18,6 +18,10 @@ augment = Compose([
     Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
     Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
     PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
+])
+gaussianNoise = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
 ])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
@@ -102,9 +106,9 @@ class DataManagement:
 
             # split and store all the emotion indexes for train/val/test as 80/10/10.
             # train is 80% of data
-            train_indexes = emotions_indexes[:int(0.8 * emotion_t_len)]
+            train_indexes = emotions_indexes[:int(0.7 * emotion_t_len)]
             # validation is 80% - 90% of the data
-            val_indexes = emotions_indexes[int(0.8 * emotion_t_len): int(0.9 * emotion_t_len)]
+            val_indexes = emotions_indexes[int(0.7 * emotion_t_len): int(0.9 * emotion_t_len)]
             # test is 90% to 100% of the data
             test_indexes = emotions_indexes[int(0.9 * emotion_t_len):]
 
@@ -139,15 +143,14 @@ class DataManagement:
         # Return 3 tuples, Each tuple represent (X_, Y_) for train/valid/test.
         return (X_train, Y_train), (X_valid, Y_valid), (X_test, Y_test)
 
-    def augment_balanced_data(self, X_train, Y_train):
+    def augment_balanced_data(self, X_train, Y_train, augment_method):
 
-        print("\n ---------------------- ")
-        print(Y_train.size)
-        print()
-        # Find the total number of instances of each class in the training set
+        # print("\n ---------------------- ")
+        # print(Y_train.size)
+        # print()
+        # # Find the total number of instances of each class in the training set
         class_counts = Counter(Y_train)
-        print("class_count", class_counts)
-
+        # print("class_count", class_counts)
 
         # Initialize a dictionary to store the number of instances of each class to augment
         num_to_augment = {}
@@ -156,7 +159,6 @@ class DataManagement:
         for cls, count in class_counts.items():
             # Calculate the number of instances of this class to augment
             num_to_augment[cls] = count // 2
-
 
         # Initialize lists to store the augmented instances
         augmented_X, augmented_Y = [], []
@@ -174,18 +176,17 @@ class DataManagement:
             # Retrieve the corresponding instances from the training set
             X_to_augment = X_train[to_augment, :]
 
-
             # Apply data augmentation to the retrieved instances
-            augmented_X_cls = augment(X_to_augment, sample_rate)
+            augmented_X_cls = augment_method(X_to_augment, sample_rate)
             augmented_Y_cls = np.array([cls] * len(augmented_X_cls))
 
             # Add the augmented instances to the lists
             augmented_X.append(augmented_X_cls)
             augmented_Y.append(augmented_Y_cls)
-        print("augmented_Y[0]: ", augmented_Y[0].__len__())
-        print("augmented_Y[1]: ", augmented_Y[1].__len__())
-        print("augmented_Y[2]: ", augmented_Y[2].__len__())
-        print("total aug_Y: ", augmented_Y[0].__len__() + augmented_Y[1].__len__() + augmented_Y[2].__len__())
+        # print("augmented_Y[0]: ", augmented_Y[0].__len__())
+        # print("augmented_Y[1]: ", augmented_Y[1].__len__())
+        # print("augmented_Y[2]: ", augmented_Y[2].__len__())
+        # print("total aug_Y: ", augmented_Y[0].__len__() + augmented_Y[1].__len__() + augmented_Y[2].__len__())
 
         # Concatenate the augmented instances with the rest of the training set
         # Concatenate the augmented instances with the rest of the training set
@@ -313,8 +314,6 @@ class DataManagement:
             signal = torch.mean(signal, dim=0, keepdim=True)
         return signal
 
-
-
     def get(self):
         waveforms, emotions = self.load_data()
 
@@ -328,8 +327,10 @@ class DataManagement:
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
 
-        train_X, train_Y = self.augment_balanced_data(train_X, train_Y)
-        print("train_X.size " , train_X.shape)
+        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
+        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
+
+        # print("train_X.size " , train_X.shape)
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
