@@ -9,15 +9,23 @@ import matplotlib.pyplot as plt
 # import librosa.display
 import warnings
 from sklearn.preprocessing import StandardScaler
-
+from collections import Counter
 from project import create_csv
+
+from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
+
+augment = Compose([
+    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
+    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
+    PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
+])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 bundle = torchaudio.pipelines.WAV2VEC2_BASE
-#bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+# bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
 
 model = bundle.get_model().to(device)
 sample_rate = bundle.sample_rate
@@ -246,6 +254,65 @@ class DataManagement:
             signal = torch.mean(signal, dim=0, keepdim=True)
         return signal
 
+    def augment_balanced_data(self, X_train, Y_train):
+
+        print("\n ---------------------- ")
+        print(Y_train.size)
+        print()
+        # Find the total number of instances of each class in the training set
+        class_counts = Counter(Y_train)
+        print("class_count", class_counts)
+
+        # Initialize a dictionary to store the number of instances of each class to augment
+        num_to_augment = {}
+
+        # Iterate through each class
+        for cls, count in class_counts.items():
+            # Calculate the number of instances of this class to augment
+            num_to_augment[cls] = count // 2
+
+        print("num_to_augment ", num_to_augment)
+
+        # Initialize lists to store the augmented instances
+        augmented_X, augmented_Y = [], []
+
+        # Iterate through each class
+        for cls, count in num_to_augment.items():
+            # Find the indices of the instances of this class
+            indices = np.where(Y_train == cls)[0]
+            # print(indices)
+
+            # Randomly select the indices to augment
+            to_augment = np.random.choice(indices, size=count, replace=False)
+
+            # Retrieve the corresponding instances from the training set
+            X_to_augment = X_train[to_augment, :]
+            # print(X_to_augment)
+
+            # Y_to_augment = Y_train[to_augment]
+
+            # Apply data augmentation to the retrieved instances
+            augmented_X_cls = augment(X_to_augment, sample_rate)
+            augmented_Y_cls = np.array([cls] * len(augmented_X_cls))
+
+            # Add the augmented instances to the lists
+            augmented_X.append(augmented_X_cls)
+            augmented_Y.append(augmented_Y_cls)
+
+        # Concatenate the augmented instances with the rest of the training set
+        # Concatenate the augmented instances with the rest of the training set
+        print("x train shape : ", X_train.shape)
+        print(augmented_X)
+        augmented_X = np.array(augmented_X)
+        print("dddddd", augmented_X)
+
+        augmented_Y = np.array(augmented_Y)
+
+        X_train_new = np.concatenate([X_train, augmented_X], axis=0)
+        Y_train_new = np.concatenate([Y_train, augmented_Y], axis=0)
+
+        return X_train_new, Y_train_new
+
     def get(self):
         waveforms, emotions = self.load_data()
 
@@ -259,6 +326,8 @@ class DataManagement:
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
 
+        train_X, train_Y = self.augment_balanced_data(train_X, train_Y)
+        print("train_X.size " , train_X.size)
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
@@ -275,8 +344,9 @@ class DataManagement:
 
 
 if __name__ == '__main__':
-    pass
-    # dm = DataManagement()
+    dm = DataManagement()
+    dm.get()
+
     # waveforms, emotions = dm.load_data()
     #
     # print(f'Waveforms set: {len(waveforms)} samples')

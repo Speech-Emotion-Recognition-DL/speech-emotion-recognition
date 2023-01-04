@@ -6,7 +6,9 @@ import soundfile as sf
 import torch
 import matplotlib.pyplot as plt
 import librosa.display
-from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain
+from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
+
+
 
 
 # adding white noise
@@ -84,14 +86,9 @@ def plot(signal, sr, title):
 
 
 augment1 = Compose([
-
-    Shift(min_fraction=0.05, max_fraction=0.1, rollover=False, fade=False, p=1),
-    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=1)
-    # PitchShift(min_semitones=-6, max_semitones=8, p=0),
-    # AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
-    # TimeStretch(min_rate=0.8, max_rate=1.25, p=1),  # masks too much time in many cases
-
-    # BandStopFilter(min_center_freq = 60, max_center_freq = 2500, min_bandwidth_fraction = 0.1, max_bandwidth_fraction = 0.4, p=0)
+    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
+    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
+    PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
 ])
 
 if __name__ == '__main__':
