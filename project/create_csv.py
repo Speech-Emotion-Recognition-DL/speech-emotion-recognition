@@ -48,8 +48,7 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     test_target = {"path": [], "emotion": [], "label": []}
     counter = 0
 
-    data_path = '../project/data/RAVDESS/Actor_*/*.wav'
-    data_path1 = '../project/data/Actor_'
+    data_path = 'RAVDESS/Actor_*/*.wav'
 
     for file in glob.glob(data_path):
 
@@ -63,11 +62,11 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         if emotion == 8:
             emotion = 0  # surprise is now at 0 index; other emotion indeces unchanged
 
-        if emotions_dict.get(emotion) == 'neutral' or emotions_dict.get(emotion) == 'calm':
+        if emotions_dict.get(emotion) == 'neutral':
             train_target["emotion"].append('neutral')
             train_target["label"].append(1)
 
-        elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised':
+        elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised' or emotions_dict.get(emotion) == 'calm':
             train_target["emotion"].append('positive')
             train_target["label"].append(0)
         elif emotions_dict.get(emotion) == 'angry' or emotions_dict.get(emotion) == 'sad' \
@@ -323,5 +322,5 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     pd.DataFrame(train_target).to_csv(train_name)
 
 
-if __name__ == '__main__':
-    write_data_to_csv()
+
+write_data_to_csv()

@@ -1,5 +1,10 @@
 import torch
 import torch.nn as nn
+# import os
+# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+import koila
+from koila import lazy
+
 from DataManagement import DataManagement, ANNOTATIONS_FILE
 from cnn_model import Convolutional_Neural_Network
 import numpy as np
@@ -8,7 +13,6 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sn
 import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
-torch.cuda.empty_cache()
 # choose number of epochs higher than reasonable so we can manually stop training
 num_epochs = 200
 # pick minibatch size (of 32... always)
@@ -167,6 +171,9 @@ if __name__ == '__main__':
     # instantiate lists to hold scalar performance metrics to plot later
     train_losses = []
     valid_losses = []
+
+    (train_X, train_Y) = lazy(train_X, train_Y, batch=0)
+    (valid_X, valid_Y) = lazy(valid_X, valid_Y, batch=0)
 
     # train it! - YAY
     train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size)

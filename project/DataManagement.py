@@ -11,18 +11,17 @@ import warnings
 from sklearn.preprocessing import StandardScaler
 from collections import Counter
 from project import create_csv
-
 from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
 
 augment = Compose([
     Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
     Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
     PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
+    # AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
 ])
-gaussianNoise = Compose([
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
-])
+# gaussianNoise = Compose([
+#     AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
+# ])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
@@ -158,7 +157,7 @@ class DataManagement:
         # Iterate through each class
         for cls, count in class_counts.items():
             # Calculate the number of instances of this class to augment
-            num_to_augment[cls] = count // 2
+            num_to_augment[cls] = count // 4
 
         # Initialize lists to store the augmented instances
         augmented_X, augmented_Y = [], []
@@ -212,13 +211,16 @@ class DataManagement:
             wave_tensor = torch.from_numpy(waveform).float()
             wave_tensor = wave_tensor.to(device)
 
-            with torch.inference_mode():
-                feat, _ = model.extract_features(wave_tensor)
+            # with torch.inference_mode():
+            #     feat, _ = model.extract_features(wave_tensor)
             with torch.inference_mode():
                 emission, _ = model(wave_tensor)
                 features.append(emission)
-                print('\r' + f' Processed {file_count}/{len(x_waveforms)} waveforms', end='')
+                print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
                 file_count += 1
+            del wave_tensor
+            torch.cuda.empty_cache()
+        del x_waveforms
 
         return features
 
@@ -235,7 +237,7 @@ class DataManagement:
         waveform, sr = torchaudio.load(file)
 
         waveform = self._mix_down_if_necessary(waveform)
-        waveform = waveform.to(device)
+        waveform = waveform
 
         """ If the sample rate of the signal is not 16,000, resample."""
         if sr != bundle.sample_rate:
@@ -327,8 +329,8 @@ class DataManagement:
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
 
-        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
-        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
+        # train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
+        # train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
 
         # print("train_X.size " , train_X.shape)
         features_train_X = self.feature_extraction(train_X)
@@ -339,44 +341,10 @@ class DataManagement:
         valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y)
         test_X, test_Y = self.tensor_4D(test_X, features_test_X, test_Y)
 
+        del features_train_X, features_valid_X, features_test_X
+
         train_X = self.feature_Scaling(train_X)
         valid_X = self.feature_Scaling(valid_X)
         test_X = self.feature_Scaling(test_X)
 
         return train_X, train_Y, valid_X, valid_Y, test_X, test_Y
-
-
-if __name__ == '__main__':
-    dm = DataManagement()
-    dm.get()
-
-    # waveforms, emotions = dm.load_data()
-    #
-    # print(f'Waveforms set: {len(waveforms)} samples')
-    # # we have 1440 waveforms but we need to know their length too; should be 3 sec * 48k = 144k
-    # print(f'Waveform signal length: {len(waveforms[0])}')
-    # print(f'Emotions set: {len(emotions)} sample labels')
-    #
-    # train_XY, valid_XY, test_XY = dm.split_data(waveforms, emotions)
-    #
-    # train_X = train_XY[0]
-    # valid_X = valid_XY[0]
-    # test_X = test_XY[0]
-    # train_Y = train_XY[1]
-    # valid_Y = valid_XY[1]
-    # test_Y = test_XY[1]
-    #
-    # features_train_X = dm.feature_extraction(train_X)
-    # features_valid_X = dm.feature_extraction(valid_X)
-    # features_test_X = dm.feature_extraction(test_X)
-    #
-    # train_X, train_Y = dm.tensor_4D(train_X, features_train_X, train_Y)
-    # valid_X, valid_Y = dm.tensor_4D(valid_X, features_valid_X, valid_Y)
-    # test_X, test_Y = dm.tensor_4D(test_X, features_test_X, test_Y)
-    #
-    # train_X = dm.feature_Scaling(train_X)
-    # valid_X = dm.feature_Scaling(valid_X)
-    # test_X = dm.feature_Scaling(test_X)
-    #
-    # print(
-    #     f'Shape of 4D feature array for input tensor: {train_X.shape} train, {valid_X.shape} validation, {test_X.shape} test')
