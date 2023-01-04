@@ -182,6 +182,10 @@ class DataManagement:
             # Add the augmented instances to the lists
             augmented_X.append(augmented_X_cls)
             augmented_Y.append(augmented_Y_cls)
+        print("augmented_Y[0]: ", augmented_Y[0].__len__())
+        print("augmented_Y[1]: ", augmented_Y[1].__len__())
+        print("augmented_Y[2]: ", augmented_Y[2].__len__())
+        print("total aug_Y: ", augmented_Y[0].__len__() + augmented_Y[1].__len__() + augmented_Y[2].__len__())
 
         # Concatenate the augmented instances with the rest of the training set
         # Concatenate the augmented instances with the rest of the training set
@@ -190,7 +194,7 @@ class DataManagement:
         augmented_Y = np.array(augmented_Y)
 
         X_train_new = np.concatenate([X_train, augmented_X[0], augmented_X[1], augmented_X[2]], axis=0)
-        Y_train_new = np.concatenate([Y_train, augmented_Y], axis=0)
+        Y_train_new = np.concatenate([Y_train, augmented_Y[0], augmented_Y[1], augmented_Y[2]], axis=0)
 
         return X_train_new, Y_train_new
 
