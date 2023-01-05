@@ -1,3 +1,4 @@
+import librosa
 from torch.utils.data import Dataset
 import numpy as np
 import torch
@@ -12,27 +13,47 @@ from sklearn.preprocessing import StandardScaler
 from collections import Counter
 from project import create_csv
 from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
+from sklearn.preprocessing import MinMaxScaler
+from mpl_toolkits.mplot3d import Axes3D
 
 augment = Compose([
-    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
-    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
-    PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
-    # AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
+    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=1/3),
+    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=1/3),
+    PitchShift(min_semitones=-2, max_semitones=2, p=1/3),
+
 ])
-# gaussianNoise = Compose([
-#     AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0015, p=1),
-# ])
+gaussianNoise = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=0.5)
+])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(device)
 bundle = torchaudio.pipelines.WAV2VEC2_BASE
 # bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
-
-model = bundle.get_model().to(device)
+#bundle = torchaudio.pipelines.WAV2VEC2_LARGE_LV60K
+model = bundle.get_model()
 sample_rate = bundle.sample_rate
 ANNOTATIONS_FILE = 'Train_test_.csv'
+
+import torch
+from GPUtil import showUtilization as gpu_usage
+from numba import cuda
+
+
+def free_gpu_cache():
+    print("Initial GPU Usage")
+    gpu_usage()
+
+    torch.cuda.empty_cache()
+
+    cuda.select_device(0)
+    cuda.close()
+    cuda.select_device(0)
+
+    print("GPU Usage after emptying the cache")
+    gpu_usage()
 
 
 class DataManagement:
@@ -105,9 +126,9 @@ class DataManagement:
 
             # split and store all the emotion indexes for train/val/test as 80/10/10.
             # train is 80% of data
-            train_indexes = emotions_indexes[:int(0.7 * emotion_t_len)]
+            train_indexes = emotions_indexes[:int(0.8 * emotion_t_len)]
             # validation is 80% - 90% of the data
-            val_indexes = emotions_indexes[int(0.7 * emotion_t_len): int(0.9 * emotion_t_len)]
+            val_indexes = emotions_indexes[int(0.8 * emotion_t_len): int(0.9 * emotion_t_len)]
             # test is 90% to 100% of the data
             test_indexes = emotions_indexes[int(0.9 * emotion_t_len):]
 
@@ -157,7 +178,7 @@ class DataManagement:
         # Iterate through each class
         for cls, count in class_counts.items():
             # Calculate the number of instances of this class to augment
-            num_to_augment[cls] = count // 4
+            num_to_augment[cls] = count // 2
 
         # Initialize lists to store the augmented instances
         augmented_X, augmented_Y = [], []
@@ -174,9 +195,11 @@ class DataManagement:
 
             # Retrieve the corresponding instances from the training set
             X_to_augment = X_train[to_augment, :]
-
+            augmented_X_cls = []
+            for i in X_to_augment:
+                augmented_X_cls.append(augment_method(i, sample_rate))
             # Apply data augmentation to the retrieved instances
-            augmented_X_cls = augment_method(X_to_augment, sample_rate)
+
             augmented_Y_cls = np.array([cls] * len(augmented_X_cls))
 
             # Add the augmented instances to the lists
@@ -200,7 +223,56 @@ class DataManagement:
 
     """ -------------- Methods for Features Extraction -------------- """
 
+    def feature_mfcc(self,
+                     waveform,
+                     sample_rate,
+                     n_mfcc=40,
+                     fft=1024,
+                     winlen=512,
+                     window='hamming',
+                     # hop=256, # increases # of time steps; was not helpful
+                     mels=128
+                     ):
+
+        # Compute the MFCCs for all STFT frames
+        # 40 mel filterbanks (n_mfcc) = 40 coefficients
+        mfc_coefficients = librosa.feature.mfcc(
+            y=waveform,
+            sr=sample_rate,
+            n_mfcc=n_mfcc,
+            n_fft=fft,
+            win_length=winlen,
+            window=window,
+            # hop_length=hop,
+            n_mels=mels,
+            fmax=sample_rate / 2
+        )
+
+        return mfc_coefficients
+
+    def get_features(self, waveforms, features, samplerate):
+
+        # initialize counter to track progress
+        file_count = 0
+
+        # process each waveform individually to get its MFCCs
+        for waveform in waveforms:
+            mfccs = self.feature_mfcc(waveform, sample_rate)
+            features.append(mfccs)
+            file_count += 1
+            # print progress
+            print('\r' + f' Processed {file_count}/{len(waveforms)} waveforms', end='')
+
+        # return all features from list of waveforms
+        return features
+
     def feature_extraction(self, x_waveforms):
+
+        # print("\n type ",
+        # type(x_waveforms), "- \n", x_waveforms)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(device)
+        model.to(device)
         features = []
         file_count = 0
         for waveform in x_waveforms:
@@ -211,15 +283,20 @@ class DataManagement:
             wave_tensor = torch.from_numpy(waveform).float()
             wave_tensor = wave_tensor.to(device)
 
+            ##mfcc
+            mfccs = self.feature_mfcc(waveform, sample_rate)
+            features.append(mfccs)
+            print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
+            file_count += 1
             # with torch.inference_mode():
             #     feat, _ = model.extract_features(wave_tensor)
-            with torch.inference_mode():
-                emission, _ = model(wave_tensor)
-                features.append(emission)
-                print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
-                file_count += 1
+            # with torch.inference_mode():
+            #     emission, _ = model(wave_tensor)
+            #     features.append(emission.detach())
+            #     print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
+            #     file_count += 1
             del wave_tensor
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
         del x_waveforms
 
         return features
@@ -254,10 +331,18 @@ class DataManagement:
 
         return waveform_homo
 
-    def tensor_4D(self, X_, features, Y):
+    def tensor_4D(self, X_, features, Y, boo):
+        if boo:
+            scaler = StandardScaler()
+            X_ = scaler.fit_transform(X_)
+        X_ = X_
         # print()
         # print(X.shape)
-        X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
+
+        # wav2vec transformer
+        #X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
+        X_ = np.stack([np.expand_dims(t, axis=0) for t in features], axis=0)
+
         # print(X.shape)
         X_ = np.squeeze(X_, axis=1)
         # print(X.shape)
@@ -277,6 +362,8 @@ class DataManagement:
         # Transform back to NxCxHxW 4D tensor format
         X_train = np.reshape(X_train, (N, C, H, W))
         return X_train
+
+
 
     def plot_emission(self, emission):
         # plot the classification results
@@ -329,22 +416,52 @@ class DataManagement:
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
 
-        # train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
-        # train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
+        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
+        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
 
-        # print("train_X.size " , train_X.shape)
+        print("train_X.size ", train_X.shape)
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
-
-        train_X, train_Y = self.tensor_4D(train_X, features_train_X, train_Y)
-        valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y)
-        test_X, test_Y = self.tensor_4D(test_X, features_test_X, test_Y)
+        print("train_X.size ", features_train_X[0].shape)
+        #
+        train_X, train_Y = self.tensor_4D(train_X, features_train_X, train_Y, True)
+        valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y, True)
+        test_X, test_Y = self.tensor_4D(test_X, features_test_X, test_Y, False)
 
         del features_train_X, features_valid_X, features_test_X
 
-        train_X = self.feature_Scaling(train_X)
-        valid_X = self.feature_Scaling(valid_X)
-        test_X = self.feature_Scaling(test_X)
+        # train_X = self.feature_Scaling(train_X)
+        # valid_X = self.feature_Scaling(valid_X)
+        # test_X = self.feature_Scaling(test_X)
+        #
+        #
 
         return train_X, train_Y, valid_X, valid_Y, test_X, test_Y
+
+
+if __name__ == '__main__':
+    dm = DataManagement()
+    dm.get()
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #
+    # # Load the audio data
+    # waveform, sample_rate = torchaudio.load(
+    #     'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/data/RAVDESS/Actor_01/03-01-01-01-01-01-01.wav')
+    # waveform = waveform.to(device)
+    #
+    # # Resample the data if necessary
+    # if sample_rate != torchaudio.pipelines.WAV2VEC2_BASE.sample_rate:
+    #     waveform = torchaudio.functional.resample(waveform, sample_rate,
+    #                                               torchaudio.pipelines.WAV2VEC2_BASE.sample_rate)
+    #
+    # # Extract the acoustic features
+    # model = torchaudio.pipelines.WAV2VEC2_BASE.get_model().to(device)
+    # output, class_log_probs = model(waveform)
+    #
+    # # Copy the output to host memory
+    # output = output.detach().cpu()
+    #
+    # # Plot the output as a spectrogram
+    # plt.imshow(output[0].T, origin='lower', aspect='auto')
+    # plt.show()

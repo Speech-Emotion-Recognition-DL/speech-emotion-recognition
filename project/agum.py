@@ -6,8 +6,9 @@ import soundfile as sf
 import torch
 import matplotlib.pyplot as plt
 import librosa.display
-from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
-
+from audiomentations import Compose,\
+    AddGaussianNoise, TimeMask, PitchShift, BandStopFilter,\
+    Shift, Gain, RoomSimulator,TimeStretch
 
 
 
@@ -85,10 +86,17 @@ def plot(signal, sr, title):
 #     return signal * gain_factor
 
 
-augment1 = Compose([
-    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=0.5),
-    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=0.5),
-    PitchShift(min_semitones=-2, max_semitones=2, p=0.5),
+# augment = Compose([
+#     AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1),
+#     # TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
+#     # PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
+#     # Shift(min_fraction=-0.5, max_fraction=0.5, p=0.5),
+# ])
+
+augment = Compose([
+    TimeStretch(rate=0.8, p=0.5),
+    SpeedPerturb(rate=1.2, p=0.5),
+    HarmonicPerturb(harmonic_ratio=1.5, p=0.5)
 ])
 
 if __name__ == '__main__':
@@ -102,10 +110,11 @@ if __name__ == '__main__':
     ax[0].set(title="original")
 
     # augmented_signal = random_gain(signal,2,4)
-    augmented_signal = augment1(signal.numpy(), sr)
+    augmented_signal = augment(signal.numpy(), sr)
+
 
     librosa.display.waveshow(augmented_signal, sr=sr, ax=ax[1])
     ax[1].set(title="augmented_signal")
     plt.show()
     augmented_signal = torch.tensor(augmented_signal)
-    torchaudio.save('stretched_signal.wav', augmented_signal, sr)
+   # torchaudio.save('stretched_signal.wav', augmented_signal, sr)

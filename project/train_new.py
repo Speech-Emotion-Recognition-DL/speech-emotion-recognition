@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 # import os
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 import koila
 from koila import lazy
@@ -15,13 +16,16 @@ import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
 
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 200
+num_epochs = 250
 # pick minibatch size (of 32... always)
 minibatch = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # instantiate lists to hold scalar performance metrics to plot later
 train_losses = []
 valid_losses = []
+learning_rates = []
+train_accuracies = []
+valid_accuracies = []
 emotions_dict_3 = {
     0: 'positive',
     1: 'neutral',
@@ -36,6 +40,9 @@ def criterion(predictions, targets):
 
 # create training loop for one complete epoch (entire training set)
 def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size):
+
+    scheduler = ReduceLROnPlateau(optimizer, patience=5, verbose=True)
+
     for epoch in range(num_epochs):
 
         # set model to train mode
@@ -95,6 +102,13 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
         # accumulate scalar performance metrics at each epoch to track and plot later
         train_losses.append(epoch_loss)
         valid_losses.append(valid_loss)
+        train_accuracies.append(torch.tensor(epoch_acc))
+        valid_accuracies.append(torch.tensor(valid_acc))
+
+        # # update the learning rate if the validation loss has not improved
+        scheduler.step(valid_loss)
+        # store the learning rate
+        learning_rates.append(optimizer.param_groups[0]['lr'])
 
         print(
             f'\nEpoch {epoch} --- loss:{epoch_loss:.3f}, Epoch accuracy:{epoch_acc:.2f}%, Validation loss:{valid_loss:.3f}, Validation accuracy:{valid_acc:.2f}%')
@@ -173,12 +187,20 @@ if __name__ == '__main__':
     # instantiate lists to hold scalar performance metrics to plot later
     train_losses = []
     valid_losses = []
+    learning_rates = []
+    train_accuracies = []
 
     (train_X, train_Y) = lazy(train_X, train_Y, batch=0)
     (valid_X, valid_Y) = lazy(valid_X, valid_Y, batch=0)
 
+
+
+
     # train it! - YAY
     train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size)
+
+
+
 
     plt.title('Loss Curve for Convolutional_Neural_Network Model')
     plt.ylabel('Loss', fontsize=16)
@@ -188,8 +210,20 @@ if __name__ == '__main__':
     plt.legend(['Training loss', 'Validation loss'])
     plt.show()
 
+    # create a line plot of the learning rates
+    plt.plot(learning_rates, label='Learning rate')
+    # add a legend and show the plot
+    plt.legend()
+    plt.show()
+
+    plt.title('Accuracies for Convolutional_Neural_Network Model')
+    plt.plot(np.array([a.cpu().numpy() for a in train_accuracies]), label='Training accuracy')
+    plt.plot(np.array([a.cpu().numpy() for a in valid_accuracies]), label='Training accuracy')
+    plt.legend(['Training accuracy', 'Validation accuracy'])
+    plt.show()
+
     # Save the model
-    torch.save(model.cuda().state_dict(), 'model_with_aug1.pt')
+    torch.save(model.cuda().state_dict(), 'model_with_aug64.pt')
 
     # Convert 4D test feature set array to tensor and move to GPU
     X_test_tensor = torch.tensor(test_X, device=device).float()
@@ -233,24 +267,24 @@ if __name__ == '__main__':
     sn.heatmap(confmatrix_df_norm, annot=True, annot_kws={"size": 13})  # annot_kws is value font
 
     plt.show()
-
-    # Save train_X
-    torch.save(train_X, 'train_X_with_aug1.pt')
-
-    # Save train_Y
-    torch.save(train_Y, 'train_Y_with_aug1.pt')
-
-    # Save valid_X
-    torch.save(valid_X, 'valid_X_with_aug1.pt')
-
-    # Save valid_Y
-    torch.save(valid_Y, 'valid_Y_with_aug1.pt')
-
-    # Save test_X
-    torch.save(test_X, 'test_X_with_aug1.pt')
-
-    # Save test_Y
-    torch.save(test_Y, 'test_Y_with_aug1.pt')
+    #
+    # # Save train_X
+    # torch.save(train_X, 'train_X_with_aug1.pt')
+    #
+    # # Save train_Y
+    # torch.save(train_Y, 'train_Y_with_aug1.pt')
+    #
+    # # Save valid_X
+    # torch.save(valid_X, 'valid_X_with_aug1.pt')
+    #
+    # # Save valid_Y
+    # torch.save(valid_Y, 'valid_Y_with_aug1.pt')
+    #
+    # # Save test_X
+    # torch.save(test_X, 'test_X_with_aug1.pt')
+    #
+    # # Save test_Y
+    # torch.save(test_Y, 'test_Y_with_aug1.pt')
 
     """ open train model and check for the prediction  """
     #

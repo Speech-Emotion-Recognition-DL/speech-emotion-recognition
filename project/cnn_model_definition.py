@@ -45,7 +45,7 @@ class Convolutional_Speaker_Identification(nn.Module):
         self.drop_1 = nn.Dropout(p=DROP_OUT)
 
         self.global_avg_pooling_2d = nn.AdaptiveAvgPool2d((1, 1))
-        self.dense_1 = nn.Linear(4096, 256)
+        self.dense_1 = nn.Linear(256, 256)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
         self.dense_2 = nn.Linear(256, 3)
@@ -59,7 +59,7 @@ class Convolutional_Speaker_Identification(nn.Module):
         x = self.max_pool_2d_1(x)
 
         x = nn.ReLU()(self.conv_2d_2(x))
-        # print(x.shape)
+        #print(x.shape)
         x = self.bn_2(x)
 
         x = self.max_pool_2d_2(x)
@@ -79,16 +79,18 @@ class Convolutional_Speaker_Identification(nn.Module):
         #x = self.max_pool_2d_3(x)
 
         #x = nn.ReLU()(self.conv_2d_6(x))
-
+        #print(x.shape)
         x = self.drop_1(x)
 
         x = self.global_avg_pooling_2d(x)
-
+        #print(x.shape)
         x = x.view(-1, x.shape[1])  # output channel for flatten before entering the dense layer
 
-        #x = nn.ReLU()(self.dense_1(x))
+        x = nn.ReLU()(self.dense_1(x))
 
         x = self.drop_2(x)
+
+
 
         x = self.dense_2(x)
         #print(x.shape)
@@ -112,7 +114,7 @@ class Convolutional_Speaker_Identification(nn.Module):
 if __name__ == "__main__":
     cnn = Convolutional_Speaker_Identification()
     # summary(cnn, (1, 64, 44))
-    summary(cnn.cuda(), (((1, 40, 94))))
+    summary(cnn.cuda(), ((1, 149, 1024)))
 
 """
 ├─Conv2d: 1-1                            [-1, 96, 73, 382]         4,800
