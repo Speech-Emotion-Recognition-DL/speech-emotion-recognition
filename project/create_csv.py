@@ -48,7 +48,7 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     test_target = {"path": [], "emotion": [], "label": []}
     counter = 0
 
-    data_path = 'RAVDESS/Actor_*/*.wav'
+    data_path = '../project/data/RAVDESS/Actor_*/*.wav'
 
     for file in glob.glob(data_path):
 

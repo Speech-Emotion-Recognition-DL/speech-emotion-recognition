@@ -13,6 +13,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sn
 import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
+
 # choose number of epochs higher than reasonable so we can manually stop training
 num_epochs = 200
 # pick minibatch size (of 32... always)
@@ -158,6 +159,7 @@ if __name__ == '__main__':
     model = Convolutional_Speaker_Identification().to(device)
     # chosen optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-3, momentum=0.8)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     # get training set size to calculate iteration and minibatch indices
     train_size = train_X.shape[0]
