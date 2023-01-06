@@ -23,7 +23,7 @@ augment = Compose([
 
 ])
 gaussianNoise = Compose([
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=0.5)
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1/2),
 ])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa

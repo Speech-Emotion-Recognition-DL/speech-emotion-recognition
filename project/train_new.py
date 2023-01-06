@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
 
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 250
+num_epochs = 300
 # pick minibatch size (of 32... always)
 minibatch = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

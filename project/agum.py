@@ -93,11 +93,7 @@ def plot(signal, sr, title):
 #     # Shift(min_fraction=-0.5, max_fraction=0.5, p=0.5),
 # ])
 
-augment = Compose([
-    TimeStretch(rate=0.8, p=0.5),
-    SpeedPerturb(rate=1.2, p=0.5),
-    HarmonicPerturb(harmonic_ratio=1.5, p=0.5)
-])
+
 
 if __name__ == '__main__':
     signal, sr = torchaudio.load(
