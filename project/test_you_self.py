@@ -13,7 +13,7 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-RECORD_SECONDS = 5
+RECORD_SECONDS = 3
 WAVE_OUTPUT_FILENAME = "recording.wav"
 
 # # Initialize the PyAudio object
@@ -116,6 +116,7 @@ mfccs = torch.tensor(mfccs).unsqueeze(0).float()
 with torch.no_grad():
     output = model(mfccs)
 output_tensor, other_variable = output
+print(output)
 prediction = output_tensor.argmax(dim=1)
 
 # Map the prediction to the corresponding emotion label

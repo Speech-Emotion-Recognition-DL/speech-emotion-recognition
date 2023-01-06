@@ -47,6 +47,9 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     train_target = {"path": [], "emotion": [], "label": [], "gender": []}
     test_target = {"path": [], "emotion": [], "label": []}
     counter = 0
+    count_negative = 0
+    count_positive = 0
+    count_neutral = 0
 
     data_path = '../project/data/RAVDESS/Actor_*/*.wav'
 
@@ -65,14 +68,18 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         if emotions_dict.get(emotion) == 'neutral':
             train_target["emotion"].append('neutral')
             train_target["label"].append(1)
+            count_neutral += 1
 
-        elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised' or emotions_dict.get(emotion) == 'calm':
+        elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised' or emotions_dict.get(
+                emotion) == 'calm':
             train_target["emotion"].append('positive')
             train_target["label"].append(0)
+            count_positive += 1
         elif emotions_dict.get(emotion) == 'angry' or emotions_dict.get(emotion) == 'sad' \
                 or emotions_dict.get(emotion) == 'disgust' or emotions_dict.get(emotion) == 'fearful':
             train_target["emotion"].append('negative')
             train_target["label"].append(2)
+            count_negative += 1
 
         # train_target["emotion"].append(emotions_dict.get(emotion))
         # train_target["label"].append(emotion)
@@ -87,181 +94,258 @@ def write_data_to_csv(train_name="Train_test_.csv"):
             gender = 'male'
         train_target["gender"].append(gender)
 
-        # data_path = '../project/data/SAVEE/DC_*/*.wav'
-
+    print(f' RAVDESS:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
+    # data_path = '../project/data/SAVEE/DC_*/*.wav'
+    count_negative = 0
+    count_positive = 0
+    count_neutral = 0
     # SAVEE dataset
-    #
-    # data_path = '../project/data/SAVEE/*'
-    # counter = 0
-    # emotion = []
-    #
-    # for file in glob.glob(data_path):
-    #
-    #     file_path = os.path.basename(file)
-    #     train_target["path"].append(file)
-    #
-    #     if file[-8:-6] == '_a':
-    #         # emotion.append('male_angry')
-    #         # train_target["emotion"].append("angry")
-    #         # train_target["label"].append(5)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #
-    #     elif file[-8:-6] == '_d':
-    #         # emotion.append('male_disgust')
-    #         # train_target["emotion"].append("disgust")
-    #         # train_target["label"].append(7)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #
-    #     elif file[-8:-6] == '_f':
-    #         # emotion.append('male_fear')
-    #         # train_target["emotion"].append("fearful")
-    #         # train_target["label"].append(6)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #
-    #     elif file[-8:-6] == '_h':
-    #         # emotion.append('male_happy')
-    #         # train_target["emotion"].append("happy")
-    #         # train_target["label"].append(3)
-    #         train_target["emotion"].append('positive')
-    #         train_target["label"].append(1)
-    #
-    #     elif file[-8:-6] == '_n':
-    #         # emotion.append('male_neutral')
-    #         # train_target["emotion"].append("neutral")
-    #         # train_target["label"].append(1)
-    #         train_target["emotion"].append('neutral')
-    #         train_target["label"].append(0)
-    #
-    #
-    #     elif file[-8:-6] == 'sa':
-    #         # emotion.append('male_sad')
-    #         # train_target["emotion"].append("sad")
-    #         # train_target["label"].append(4)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #
-    #     elif file[-8:-6] == 'su':
-    #         # emotion.append('male_surprise')
-    #         # train_target["emotion"].append("surprised")
-    #         # train_target["label"].append(0)
-    #         train_target["emotion"].append('positive')
-    #         train_target["label"].append(1)
-    #
-    #     train_target["gender"].append("male")
-    #
-    # # CREMA-D dataset
-    # data_path = '../project/data/CREMA-D/*'
-    # female = [1002, 1003, 1004, 1006, 1007, 1008, 1009, 1010, 1012, 1013, 1018, 1020, 1021, 1024, 1025, 1028, 1029,
-    #           1030, 1037, 1043, 1046, 1047, 1049,
-    #           1052, 1053, 1054, 1055, 1056, 1058, 1060, 1061, 1063, 1072, 1073, 1074, 1075, 1076, 1078, 1079, 1082,
-    #           1084, 1089, 1091]
-    #
-    # for i in glob.glob(data_path):
-    #     #print(i)
-    #
-    #     file_path = os.path.basename(i)
-    #     #print(file_path)
-    #     train_target["path"].append(i)
-    #
-    #
-    #
-    #     part = file_path.split('_')
-    #     if int(part[0]) in female:
-    #         temp = 'female'
-    #     else:
-    #         temp = 'male'
-    #
-    #     # gender.append(temp)
-    #     if part[2] == 'SAD' and temp == 'male':
-    #         # train_target["emotion"].append("sad")
-    #         # train_target["label"].append(4)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #
-    #         train_target["gender"].append("male")
-    #     elif part[2] == 'ANG' and temp == 'male':
-    #         # emotion.append('male_angry')
-    #         # train_target["emotion"].append("angry")
-    #         # train_target["label"].append(5)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("male")
-    #
-    #     elif part[2] == 'DIS' and temp == 'male':
-    #         # train_target["emotion"].append("disgust")
-    #         # train_target["label"].append(7)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("male")
-    #
-    #     elif part[2] == 'FEA' and temp == 'male':
-    #         # train_target["emotion"].append("fearful")
-    #         # train_target["label"].append(6)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("male")
-    #
-    #     elif part[2] == 'HAP' and temp == 'male':
-    #         # train_target["emotion"].append("happy")
-    #         # train_target["label"].append(3)
-    #         train_target["gender"].append("male")
-    #         train_target["emotion"].append('positive')
-    #         train_target["label"].append(1)
-    #
-    #     elif part[2] == 'NEU' and temp == 'male':
-    #         # train_target["emotion"].append("neutral")
-    #         # train_target["label"].append(1)
-    #         train_target["gender"].append("male")
-    #         train_target["emotion"].append('neutral')
-    #         train_target["label"].append(0)
-    #
-    #     elif part[2] == 'SAD' and temp == 'female':
-    #         # train_target["emotion"].append("sad")
-    #         # train_target["label"].append(4)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("female")
-    #
-    #     elif part[2] == 'ANG' and temp == 'female':
-    #         # train_target["emotion"].append("angry")
-    #         # train_target["label"].append(5)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("female")
-    #
-    #     elif part[2] == 'DIS' and temp == 'female':
-    #         # train_target["emotion"].append("disgust")
-    #         # train_target["label"].append(7)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("female")
-    #
-    #     elif part[2] == 'FEA' and temp == 'female':
-    #         # train_target["emotion"].append("fearful")
-    #         # train_target["label"].append(6)
-    #         train_target["emotion"].append('negative')
-    #         train_target["label"].append(2)
-    #         train_target["gender"].append("female")
-    #
-    #
-    #     elif part[2] == 'HAP' and temp == 'female':
-    #         # train_target["emotion"].append("happy")
-    #         # train_target["label"].append(3)
-    #         train_target["emotion"].append('positive')
-    #         train_target["label"].append(1)
-    #         train_target["gender"].append("female")
-    #
-    #
-    #     elif part[2] == 'NEU' and temp == 'female':
-    #         # train_target["emotion"].append("neutral")
-    #         # train_target["label"].append(1)
-    #         train_target["gender"].append("female")
-    #         train_target["emotion"].append('neutral')
-    #         train_target["label"].append(0)
 
+    sad = 0
+    dis = 0
+    fear = 0
+    angry = 0
+
+    data_path = '../project/data/SAVEE/*'
+    counter = 0
+    emotion = []
+
+    for file in glob.glob(data_path):
+
+        file_path = os.path.basename(file)
+
+        if file[-8:-6] == '_a' and angry < 30:
+            # emotion.append('male_angry')
+            # train_target["emotion"].append("angry")
+            # train_target["label"].append(5)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            count_negative += 1
+            angry += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+        elif file[-8:-6] == '_d' and dis < 30:
+            # emotion.append('male_disgust')
+            # train_target["emotion"].append("disgust")
+            # train_target["label"].append(7)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            count_negative += 1
+            dis += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+
+        elif file[-8:-6] == '_f' and fear < 30:
+            # emotion.append('male_fear')
+            # train_target["emotion"].append("fearful")
+            # train_target["label"].append(6)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            count_negative += 1
+            fear += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+        elif file[-8:-6] == '_h':
+            # emotion.append('male_happy')
+            # train_target["emotion"].append("happy")
+            # train_target["label"].append(3)
+            train_target["emotion"].append('positive')
+            train_target["label"].append(0)
+            count_positive += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+        elif file[-8:-6] == '_n':
+            # emotion.append('male_neutral')
+            # train_target["emotion"].append("neutral")
+            # train_target["label"].append(1)
+            train_target["emotion"].append('neutral')
+            train_target["label"].append(1)
+            count_neutral += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+
+        elif file[-8:-6] == 'sa' and sad < 30:
+            # emotion.append('male_sad')
+            # train_target["emotion"].append("sad")
+            # train_target["label"].append(4)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            count_negative += 1
+            sad += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+
+
+        elif file[-8:-6] == 'su':
+            # emotion.append('male_surprise')
+            # train_target["emotion"].append("surprised")
+            # train_target["label"].append(0)
+            train_target["emotion"].append('positive')
+            train_target["label"].append(0)
+            count_positive += 1
+            train_target["gender"].append("male")
+            train_target["path"].append(file)
+        else:
+            continue
+
+    print(f' SAVEE:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
+    print(f' SAVEE:\n angry {angry} , disgusts {dis} , sad {sad}, fear {fear}')
+
+    count_negative = 0
+    count_positive = 0
+    count_neutral = 0
+
+    sad_m, fear_m, dis_m, angry_m, = 0, 0, 0, 0
+    sad_w, fear_w, dis_w, angry_w, = 0, 0, 0, 0
+    #
+    # CREMA-D dataset
+    data_path = '../project/data/CREMA-D/*'
+    female = [1002, 1003, 1004, 1006, 1007, 1008, 1009, 1010, 1012, 1013, 1018, 1020, 1021, 1024, 1025, 1028, 1029,
+              1030, 1037, 1043, 1046, 1047, 1049,
+              1052, 1053, 1054, 1055, 1056, 1058, 1060, 1061, 1063, 1072, 1073, 1074, 1075, 1076, 1078, 1079, 1082,
+              1084, 1089, 1091]
+
+    for i in glob.glob(data_path):
+        # print(i)
+
+        file_path = os.path.basename(i)
+        # print(file_path)
+
+
+        part = file_path.split('_')
+        if int(part[0]) in female:
+            temp = 'female'
+
+        else:
+            temp = 'male'
+
+        # gender.append(temp)
+        if part[2] == 'SAD' and temp == 'male' and sad_m < 134:
+            # train_target["emotion"].append("sad")
+            # train_target["label"].append(4)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            count_negative += 1
+            sad_m += 1
+            train_target["path"].append(i)
+
+            train_target["gender"].append("male")
+        elif part[2] == 'ANG' and temp == 'male' and angry_m <134:
+            # emotion.append('male_angry')
+            # train_target["emotion"].append("angry")
+            # train_target["label"].append(5)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("male")
+            count_negative += 1
+            angry_m += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'DIS' and temp == 'male' and dis_m <134:
+            # train_target["emotion"].append("disgust")
+            # train_target["label"].append(7)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("male")
+            count_negative += 1
+            dis_m += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'FEA' and temp == 'male' and fear_m < 134:
+            # train_target["emotion"].append("fearful")
+            # train_target["label"].append(6)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("male")
+            count_negative += 1
+            fear_m += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'HAP' and temp == 'male':
+            # train_target["emotion"].append("happy")
+            # train_target["label"].append(3)
+            train_target["gender"].append("male")
+            train_target["emotion"].append('positive')
+            train_target["label"].append(0)
+            count_positive += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'NEU' and temp == 'male':
+            # train_target["emotion"].append("neutral")
+            # train_target["label"].append(1)
+            train_target["gender"].append("male")
+            train_target["emotion"].append('neutral')
+            train_target["label"].append(1)
+            count_neutral += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'SAD' and temp == 'female' and sad_w < 120:
+            # train_target["emotion"].append("sad")
+            # train_target["label"].append(4)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("female")
+            count_negative += 1
+            sad_w += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'ANG' and temp == 'female' and angry_w <120:
+            # train_target["emotion"].append("angry")
+            # train_target["label"].append(5)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("female")
+            count_negative += 1
+            angry_w += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'DIS' and temp == 'female' and dis_w < 120:
+            # train_target["emotion"].append("disgust")
+            # train_target["label"].append(7)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("female")
+            count_negative += 1
+            dis_w += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'FEA' and temp == 'female' and fear_w <120:
+            # train_target["emotion"].append("fearful")
+            # train_target["label"].append(6)
+            train_target["emotion"].append('negative')
+            train_target["label"].append(2)
+            train_target["gender"].append("female")
+            count_negative += 1
+            fear_w += 1
+            train_target["path"].append(i)
+
+
+        elif part[2] == 'HAP' and temp == 'female':
+            # train_target["emotion"].append("happy")
+            # train_target["label"].append(3)
+            train_target["emotion"].append('positive')
+            train_target["label"].append(0)
+            train_target["gender"].append("female")
+            count_positive += 1
+            train_target["path"].append(i)
+
+        elif part[2] == 'NEU' and temp == 'female':
+            # train_target["emotion"].append("neutral")
+            # train_target["label"].append(1)
+            train_target["gender"].append("female")
+            train_target["emotion"].append('neutral')
+            train_target["label"].append(1)
+            count_neutral += 1
+            train_target["path"].append(i)
+
+
+    print(f' CAMA_D:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
+    print(f' CAMA_D:\n fear {fear_m + fear_w} , sad {sad_m + sad_w} , angry {angry_m+ angry_w}, disgust {dis_m +dis_w}')
     # #TESS dataset
     # data_path = '../project/data/TESS/*'
     # for i in glob.glob(data_path):
@@ -322,5 +406,23 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     pd.DataFrame(train_target).to_csv(train_name)
 
 
-
 write_data_to_csv()
+
+import matplotlib.pyplot as plt
+
+# Load the data from the CSV file
+df = pd.read_csv('Train_test_.csv')
+# Count the number of occurrences of each emotion
+counts = df['emotion'].value_counts()
+
+# Extract the names of the emotions
+emotion_names = counts.index
+
+# Plot the horizontal bars
+plt.barh(range(len(emotion_names)), counts)
+
+# Set the tick labels to the names of the emotions
+plt.yticks(range(len(emotion_names)), emotion_names)
+
+# Show the plot
+plt.show()

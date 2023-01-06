@@ -86,12 +86,12 @@ def plot(signal, sr, title):
 #     return signal * gain_factor
 
 
-# augment = Compose([
-#     AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1),
-#     # TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
-#     # PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
-#     # Shift(min_fraction=-0.5, max_fraction=0.5, p=0.5),
-# ])
+augment = Compose([
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1),
+    # TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
+    # PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
+    # Shift(min_fraction=-0.5, max_fraction=0.5, p=0.5),
+])
 
 
 
