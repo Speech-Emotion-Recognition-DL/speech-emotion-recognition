@@ -94,7 +94,11 @@ def write_data_to_csv(train_name="Train_test_.csv"):
             gender = 'male'
         train_target["gender"].append(gender)
 
+
     print(f' RAVDESS:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
+
+    total = count_negative + count_positive +count_neutral
+    print(total)
     # data_path = '../project/data/SAVEE/DC_*/*.wav'
     count_negative = 0
     count_positive = 0
@@ -193,8 +197,10 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         else:
             continue
 
+    total += count_negative + count_positive + count_neutral
+    print("savv ", count_negative + count_positive + count_neutral)
     print(f' SAVEE:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
-    print(f' SAVEE:\n angry {angry} , disgusts {dis} , sad {sad}, fear {fear}')
+    #print(f' SAVEE:\n angry {angry} , disgusts {dis} , sad {sad}, fear {fear}')
 
     count_negative = 0
     count_positive = 0
@@ -343,9 +349,12 @@ def write_data_to_csv(train_name="Train_test_.csv"):
             count_neutral += 1
             train_target["path"].append(i)
 
-
+    total_cma =count_negative + count_positive +count_neutral
+    total += count_negative + count_positive + count_neutral
     print(f' CAMA_D:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
-    print(f' CAMA_D:\n fear {fear_m + fear_w} , sad {sad_m + sad_w} , angry {angry_m+ angry_w}, disgust {dis_m +dis_w}')
+    print(total_cma)
+    print(total)
+    #print(f' CAMA_D:\n fear {fear_m + fear_w} , sad {sad_m + sad_w} , angry {angry_m+ angry_w}, disgust {dis_m +dis_w}')
     # #TESS dataset
     # data_path = '../project/data/TESS/*'
     # for i in glob.glob(data_path):
@@ -408,21 +417,23 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
 write_data_to_csv()
 
-import matplotlib.pyplot as plt
-
-# Load the data from the CSV file
-df = pd.read_csv('Train_test_.csv')
-# Count the number of occurrences of each emotion
-counts = df['emotion'].value_counts()
-
-# Extract the names of the emotions
-emotion_names = counts.index
-
-# Plot the horizontal bars
-plt.barh(range(len(emotion_names)), counts)
-
-# Set the tick labels to the names of the emotions
-plt.yticks(range(len(emotion_names)), emotion_names)
-
-# Show the plot
-plt.show()
+# import matplotlib.pyplot as plt
+#
+# # Load the data from the CSV file
+# df = pd.read_csv('Train_test_.csv')
+# # Count the number of occurrences of each emotion
+# counts = df['emotion'].value_counts()
+#
+# # Extract the names of the emotions
+# emotion_names = counts.index
+#
+# # Plot the horizontal bars
+# plt.barh(range(len(emotion_names)), counts)
+#
+# # Set the tick labels to the names of the emotions
+# plt.yticks(range(len(emotion_names)), emotion_names)
+#
+# # Show the plot
+# plt.show()
+fraction = f'{3374}/{5174} = {3374/5174:.2f}'
+print(fraction)

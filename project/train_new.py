@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
 
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 200
+num_epochs = 100
 # pick minibatch size (of 32... always)
-minibatch = 128
+minibatch = 32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # instantiate lists to hold scalar performance metrics to plot later
 train_losses = []
@@ -42,6 +42,14 @@ def criterion(predictions, targets):
 def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size):
 
     scheduler = ReduceLROnPlateau(optimizer, patience=5, verbose=True)
+
+    # Record the best model weights
+    best_weights = None
+    # Record the best validation loss
+    best_val_loss = float('inf')
+    # Record the number of epochs without improvement
+    no_improvement_epochs = 0
+
 
     for epoch in range(num_epochs):
 
@@ -99,6 +107,9 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
         # calculate validation metrics to keep track of progress; don't need predictions now
         valid_loss, valid_acc, _ = validate(X_valid_tensor, Y_valid_tensor)
 
+
+
+
         # accumulate scalar performance metrics at each epoch to track and plot later
         train_losses.append(epoch_loss)
         valid_losses.append(valid_loss)
@@ -109,6 +120,11 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
         scheduler.step(valid_loss)
         # store the learning rate
         learning_rates.append(optimizer.param_groups[0]['lr'])
+
+        # # If the validation loss is the best seen so far
+        # if valid_loss < best_val_loss:
+        #     # Update the best validation loss
+        #     best_val_loss = valid_loss
 
         print(
             f'\nEpoch {epoch} --- loss:{epoch_loss:.3f}, Epoch accuracy:{epoch_acc:.2f}%, Validation loss:{valid_loss:.3f}, Validation accuracy:{valid_acc:.2f}%')

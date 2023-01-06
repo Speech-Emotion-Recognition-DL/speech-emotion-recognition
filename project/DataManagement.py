@@ -17,9 +17,9 @@ from sklearn.preprocessing import MinMaxScaler
 from mpl_toolkits.mplot3d import Axes3D
 
 augment = Compose([
-    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=1/3),
-    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=1/3),
-    PitchShift(min_semitones=-2, max_semitones=2, p=1/3),
+    Shift(min_fraction=((1 / 3) / 2) / 10, max_fraction=((1 / 3) / 2), rollover=False, fade=False, p=1),
+    Gain(min_gain_in_db=-10, max_gain_in_db=10, p=1),
+    PitchShift(min_semitones=-2, max_semitones=2, p=1),
 
 ])
 gaussianNoise = Compose([
@@ -126,9 +126,9 @@ class DataManagement:
 
             # split and store all the emotion indexes for train/val/test as 80/10/10.
             # train is 80% of data
-            train_indexes = emotions_indexes[:int(0.8 * emotion_t_len)]
+            train_indexes = emotions_indexes[:int(0.70 * emotion_t_len)]
             # validation is 80% - 90% of the data
-            val_indexes = emotions_indexes[int(0.8 * emotion_t_len): int(0.9 * emotion_t_len)]
+            val_indexes = emotions_indexes[int(0.7 * emotion_t_len): int(0.9 * emotion_t_len)]
             # test is 90% to 100% of the data
             test_indexes = emotions_indexes[int(0.9 * emotion_t_len):]
 
@@ -282,14 +282,17 @@ class DataManagement:
             # convert the waveform to dtype:float Tensor
             wave_tensor = torch.from_numpy(waveform).float()
             wave_tensor = wave_tensor.to(device)
-
-            ##mfcc
+            #
+            # # mfcc
             mfccs = self.feature_mfcc(waveform, sample_rate)
             features.append(mfccs)
             print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
             file_count += 1
             # with torch.inference_mode():
             #     feat, _ = model.extract_features(wave_tensor)
+            #     features.append(feat.detach())
+            #     print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
+            #     file_count += 1
             # with torch.inference_mode():
             #     emission, _ = model(wave_tensor)
             #     features.append(emission.detach())
@@ -341,6 +344,7 @@ class DataManagement:
 
         # wav2vec transformer
         #X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
+        #mfcc
         X_ = np.stack([np.expand_dims(t, axis=0) for t in features], axis=0)
 
         # print(X.shape)
