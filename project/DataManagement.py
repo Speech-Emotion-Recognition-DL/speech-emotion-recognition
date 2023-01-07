@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import warnings
 from sklearn.preprocessing import StandardScaler
 from collections import Counter
+from sklearn.decomposition import PCA
+from torchaudio import transforms
+
 from project import create_csv
 from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
 from sklearn.preprocessing import MinMaxScaler
@@ -23,7 +26,7 @@ augment = Compose([
 
 ])
 gaussianNoise = Compose([
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1/2),
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1),
 ])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
@@ -32,7 +35,7 @@ warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 # print(device)
 bundle = torchaudio.pipelines.WAV2VEC2_BASE
 # bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
-#bundle = torchaudio.pipelines.WAV2VEC2_LARGE_LV60K
+# bundle = torchaudio.pipelines.WAV2VEC2_LARGE_LV60K
 model = bundle.get_model()
 sample_rate = bundle.sample_rate
 ANNOTATIONS_FILE = 'Train_test_.csv'
@@ -60,6 +63,7 @@ class DataManagement:
 
     def __init__(self):
         self.annotations = pd.read_csv(ANNOTATIONS_FILE)
+        self.pca = None  # Define the pca object as a class attribute
 
     def __len__(self):
         """
@@ -98,6 +102,8 @@ class DataManagement:
 
     def split_data(self, waveforms, emotions):
         """  """
+
+        # import cupy as cp
 
         # lists that will contain data extracted from signals
         X_train, X_valid, X_test = [], [], []
@@ -234,6 +240,25 @@ class DataManagement:
                      mels=128
                      ):
 
+        # win_length = None
+        # hop_length = 512
+        #
+        # n_mfcc = 256
+        #
+        # mfcc_transform = transforms.MFCC(
+        #     sample_rate=sample_rate,
+        #     n_mfcc=n_mfcc,
+        #     window= winlen,
+        #     melkwargs={
+        #         "n_fft": fft,
+        #         "n_mels": mels,
+        #         "hop_length": hop_length,
+        #         "mel_scale": "htk",
+        #     },
+        # )
+        #
+        # mfcc = mfcc_transform(SPEECH_WAVEFORM)
+
         # Compute the MFCCs for all STFT frames
         # 40 mel filterbanks (n_mfcc) = 40 coefficients
         mfc_coefficients = librosa.feature.mfcc(
@@ -327,7 +352,8 @@ class DataManagement:
             first we take each waveform with the shifted 0.5 first sec, and then the total 3 second long further.
             Now each sample have same length.
             """
-        half_sec = int(0.5 * sr)  # shift 0.5 sec
+        # half_sec = int(0.5 * sr)  # shift 0.5 sec
+        half_sec = int(0 * sr)
         wave = np.array(waveform[0].cpu().numpy())
         waveform_homo = np.zeros((int(sample_rate * 3, )))
         waveform_homo[:len(wave[half_sec:half_sec + 3 * sample_rate])] = wave[half_sec:half_sec + 3 * sample_rate]
@@ -335,20 +361,24 @@ class DataManagement:
         return waveform_homo
 
     def tensor_4D(self, X_, features, Y, boo):
+
+        # X_ = self.apply_pca(X_)
+
         if boo:
             scaler = StandardScaler()
             X_ = scaler.fit_transform(X_)
-        X_ = X_
+        # X_ = X_
         # print()
         # print(X.shape)
 
         # wav2vec transformer
-        #X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
-        #mfcc
+        # X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
+        # mfcc
         X_ = np.stack([np.expand_dims(t, axis=0) for t in features], axis=0)
 
         # print(X.shape)
         X_ = np.squeeze(X_, axis=1)
+
         # print(X.shape)
         # convert emotion labels from list back to numpy arrays for PyTorch to work with
         Y = np.array(Y)
@@ -366,8 +396,6 @@ class DataManagement:
         # Transform back to NxCxHxW 4D tensor format
         X_train = np.reshape(X_train, (N, C, H, W))
         return X_train
-
-
 
     def plot_emission(self, emission):
         # plot the classification results
@@ -408,8 +436,10 @@ class DataManagement:
         return signal
 
     def get(self):
+        # load the data from csv
         waveforms, emotions = self.load_data()
 
+        # split to train/validation /test # retuen tuple of (x,y) for each
         train_XY, valid_XY, test_XY = self.split_data(waveforms, emotions)
 
         train_X = train_XY[0]
@@ -420,18 +450,25 @@ class DataManagement:
         valid_Y = valid_XY[1]
         test_Y = test_XY[1]
 
+        # augment data
         train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
-        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
+        rain_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
 
+        ##extraction the feature
         print("train_X.size ", train_X.shape)
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
-        print("train_X.size ", features_train_X[0].shape)
-        #
+
+        # self.pca = self.apply_pca(features_train_X, 0.9)  # Fit a PCA model to the training data
+        # train_X = self.pca.transform(features_train_X)  # Transform the training data using the PCA model
+        # valid_X = self.pca.transform(features_valid_X)  # Transform the validation data using the PCA model
+        # test_X = self.pca.transform(features_test_X)  # Transform the test data using the PCA model
+
         train_X, train_Y = self.tensor_4D(train_X, features_train_X, train_Y, True)
         valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y, True)
         test_X, test_Y = self.tensor_4D(test_X, features_test_X, test_Y, False)
+        print("train_X.size ", train_X.shape)
 
         del features_train_X, features_valid_X, features_test_X
 
@@ -442,6 +479,20 @@ class DataManagement:
         #
 
         return train_X, train_Y, valid_X, valid_Y, test_X, test_Y
+
+    def apply_pca(self, data, n_components=0.9):
+        # Continue with the PCA computation as before...
+        pca = PCA(n_components=n_components)
+        pca.fit(data)
+        # Document the explained variance ratio of the principal components
+        explained_variance = pca.explained_variance_ratio_
+        print(f'Explained variance ratio: {explained_variance}')
+
+        # Document the number of components used to retain 95% of the variance
+        n_components = pca.n_components_
+        print(f'Number of components used to retain 95% of the variance: {n_components}')
+
+        return pca.transform(data)
 
 
 if __name__ == '__main__':
