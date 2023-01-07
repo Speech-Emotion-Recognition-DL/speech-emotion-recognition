@@ -7,7 +7,6 @@ import koila
 from koila import lazy
 
 from DataManagement import DataManagement, ANNOTATIONS_FILE
-from cnn_model import Convolutional_Neural_Network
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
@@ -16,9 +15,9 @@ import matplotlib.pyplot as plt
 from cnn_model_definition import Convolutional_Speaker_Identification
 
 # choose number of epochs higher than reasonable so we can manually stop training
-num_epochs = 100
+num_epochs = 200
 # pick minibatch size (of 32... always)
-minibatch = 32
+minibatch = 128
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # instantiate lists to hold scalar performance metrics to plot later
 train_losses = []
@@ -26,10 +25,21 @@ valid_losses = []
 learning_rates = []
 train_accuracies = []
 valid_accuracies = []
+# emotions_dict_3 = {
+#     0: 'positive',
+#     1: 'neutral',
+#     2: 'negative',
+# }
+
 emotions_dict_3 = {
-    0: 'positive',
+    0: 'surprised',
     1: 'neutral',
-    2: 'negative',
+    2: 'calm',
+    3: 'happy',
+    4: 'sad',
+    5: 'angry',
+    6: 'fearful',
+    7: 'disgust'
 }
 
 
@@ -40,7 +50,6 @@ def criterion(predictions, targets):
 
 # create training loop for one complete epoch (entire training set)
 def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size):
-
     scheduler = ReduceLROnPlateau(optimizer, patience=5, verbose=True)
 
     # Record the best model weights
@@ -49,7 +58,6 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
     best_val_loss = float('inf')
     # Record the number of epochs without improvement
     no_improvement_epochs = 0
-
 
     for epoch in range(num_epochs):
 
@@ -106,9 +114,6 @@ def train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, trai
 
         # calculate validation metrics to keep track of progress; don't need predictions now
         valid_loss, valid_acc, _ = validate(X_valid_tensor, Y_valid_tensor)
-
-
-
 
         # accumulate scalar performance metrics at each epoch to track and plot later
         train_losses.append(epoch_loss)
@@ -189,7 +194,7 @@ if __name__ == '__main__':
     model = Convolutional_Speaker_Identification().to(device)
     # chosen optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-3, momentum=0.8)
-    #optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     # get training set size to calculate iteration and minibatch indices
     train_size = train_X.shape[0]
@@ -209,14 +214,8 @@ if __name__ == '__main__':
     (train_X, train_Y) = lazy(train_X, train_Y, batch=0)
     (valid_X, valid_Y) = lazy(valid_X, valid_Y, batch=0)
 
-
-
-
     # train it! - YAY
     train(optimizer, model, num_epochs, train_X, train_Y, valid_X, valid_Y, train_size)
-
-
-
 
     plt.title('Loss Curve for Convolutional_Neural_Network Model')
     plt.ylabel('Loss', fontsize=16)
@@ -259,6 +258,7 @@ if __name__ == '__main__':
     # because model tested on GPU, move prediction tensor to CPU then convert to array
     predicted_emotions = predicted_emotions.cpu().numpy()
     # use labels from test set
+
     emotions_groundtruth = test_Y
 
     # build confusion matrix and normalized confusion matrix

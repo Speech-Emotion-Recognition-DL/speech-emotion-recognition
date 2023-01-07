@@ -38,8 +38,8 @@ bundle = torchaudio.pipelines.WAV2VEC2_BASE
 # bundle = torchaudio.pipelines.WAV2VEC2_LARGE_LV60K
 model = bundle.get_model()
 sample_rate = bundle.sample_rate
-ANNOTATIONS_FILE = 'Train_test_.csv'
-
+# ANNOTATIONS_FILE = 'Train_test_.csv'
+ANNOTATIONS_FILE = '8emotion.csv'
 import torch
 from GPUtil import showUtilization as gpu_usage
 from numba import cuda

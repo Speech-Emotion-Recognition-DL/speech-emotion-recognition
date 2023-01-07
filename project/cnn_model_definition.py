@@ -48,7 +48,7 @@ class Convolutional_Speaker_Identification(nn.Module):
         self.dense_1 = nn.Linear(256, 256)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
-        self.dense_2 = nn.Linear(256, 3)
+        self.dense_2 = nn.Linear(256, 8)
 
     def forward(self, X):
         # print(X.shape)
@@ -114,7 +114,7 @@ class Convolutional_Speaker_Identification(nn.Module):
 if __name__ == "__main__":
     cnn = Convolutional_Speaker_Identification()
     # summary(cnn, (1, 64, 44))
-    summary(cnn.cuda(), ((1, 149, 798)))
+    summary(cnn.cuda(), ((1, 40, 94)))
 
 """
 ├─Conv2d: 1-1                            [-1, 96, 73, 382]         4,800
