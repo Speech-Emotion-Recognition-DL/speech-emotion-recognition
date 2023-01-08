@@ -452,7 +452,7 @@ class DataManagement:
 
         # augment data
         train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
-        rain_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
+        #train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
 
         ##extraction the feature
         print("train_X.size ", train_X.shape)

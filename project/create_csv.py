@@ -58,7 +58,6 @@ def write_data_to_csv(train_name="Train_test_.csv"):
     count_neutral = 0
 
     data_path = '../project/data/RAVDESS/Actor_*/*.wav'
-
     for file in glob.glob(data_path):
 
         file_path = os.path.basename(file)
@@ -71,24 +70,8 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         if emotion == 8:
             emotion = 0  # surprise is now at 0 index; other emotion indeces unchanged
 
-        if emotions_dict.get(emotion) == 'neutral':
-            train_target["emotion"].append('neutral')
-            train_target["label"].append(1)
-            count_neutral += 1
-
-        elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised' or emotions_dict.get(
-                emotion) == 'calm':
-            train_target["emotion"].append('positive')
-            train_target["label"].append(0)
-            count_positive += 1
-        elif emotions_dict.get(emotion) == 'angry' or emotions_dict.get(emotion) == 'sad' \
-                or emotions_dict.get(emotion) == 'disgust' or emotions_dict.get(emotion) == 'fearful':
-            train_target["emotion"].append('negative')
-            train_target["label"].append(2)
-            count_negative += 1
-
-        # train_target["emotion"].append(emotions_dict.get(emotion))
-        # train_target["label"].append(emotion)
+        train_target["emotion"].append(emotions_dict.get(emotion))
+        train_target["label"].append(emotion)
 
         # get other labels we might want
         # even actors are female, odd are male
@@ -99,6 +82,46 @@ def write_data_to_csv(train_name="Train_test_.csv"):
         else:
             gender = 'male'
         train_target["gender"].append(gender)
+    # for file in glob.glob(data_path):
+    #
+    #     file_path = os.path.basename(file)
+    #     train_target["path"].append(file)
+    #
+    #     # get emotion label from the sample's file
+    #     emotion = int(file_path.split("-")[2])
+    #
+    #     #  move surprise to 0 for cleaner behaviour with PyTorch/0-indexing
+    #     if emotion == 8:
+    #         emotion = 0  # surprise is now at 0 index; other emotion indeces unchanged
+    #
+    #     if emotions_dict.get(emotion) == 'neutral':
+    #         train_target["emotion"].append('neutral')
+    #         train_target["label"].append(1)
+    #         count_neutral += 1
+    #
+    #     elif emotions_dict.get(emotion) == 'happy' or emotions_dict.get(emotion) == 'surprised' or emotions_dict.get(
+    #             emotion) == 'calm':
+    #         train_target["emotion"].append('positive')
+    #         train_target["label"].append(0)
+    #         count_positive += 1
+    #     elif emotions_dict.get(emotion) == 'angry' or emotions_dict.get(emotion) == 'sad' \
+    #             or emotions_dict.get(emotion) == 'disgust' or emotions_dict.get(emotion) == 'fearful':
+    #         train_target["emotion"].append('negative')
+    #         train_target["label"].append(2)
+    #         count_negative += 1
+    #
+    #     # train_target["emotion"].append(emotions_dict.get(emotion))
+    #     # train_target["label"].append(emotion)
+    #
+    #     # get other labels we might want
+    #     # even actors are female, odd are male
+    #     gender = ""
+    #     if (int((file_path.split("-")[6]).split(".")[0])) % 2 == 0:
+    #         gender = 'female'
+    #
+    #     else:
+    #         gender = 'male'
+    #     train_target["gender"].append(gender)
 
     # print(f' RAVDESS:\n negative {count_negative} , postitve {count_positive} , neutral {count_neutral}')
 
@@ -418,28 +441,28 @@ def write_data_to_csv(train_name="Train_test_.csv"):
 
 # print(len(train_target["path"]),len(train_target["emotion"]), len(train_target["label"]), len(train_target["gender"]))
 # Creating a DataFrame
-# pd.DataFrame(train_target).to_csv(train_name)
+    pd.DataFrame(train_target).to_csv(train_name)
 
 
 
 
-# write_data_to_csv()
+write_data_to_csv()
 
 import matplotlib.pyplot as plt
 
-# Load the data from the CSV file
-df = pd.read_csv('Train_test_.csv')
-# Count the number of occurrences of each emotion
-counts = df['emotion'].value_counts()
-
-# Extract the names of the emotions
-emotion_names = counts.index
-
-# Plot the horizontal bars
-plt.barh(range(len(emotion_names)), counts, color=(222 / 255, 71 / 255, 142 / 255))
-
-# Set the tick labels to the names of the emotions
-plt.yticks(range(len(emotion_names)), emotion_names)
+# # Load the data from the CSV file
+# df = pd.read_csv('Train_test_.csv')
+# # Count the number of occurrences of each emotion
+# counts = df['emotion'].value_counts()
+#
+# # Extract the names of the emotions
+# emotion_names = counts.index
+#
+# # Plot the horizontal bars
+# plt.barh(range(len(emotion_names)), counts, color=(222 / 255, 71 / 255, 142 / 255))
+#
+# # Set the tick labels to the names of the emotions
+# plt.yticks(range(len(emotion_names)), emotion_names)
 
 # Show the plot
 # plt.show()
