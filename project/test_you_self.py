@@ -58,7 +58,7 @@ librosa.display.waveshow(data, sr=sr)
 plt.show()
 
 # Load the model's weights and parameters from the file
-state_dict = torch.load('model_with_aug64.pt')
+state_dict = torch.load('model.pt')
 
 # Create a new model object
 model = Convolutional_Speaker_Identification()
@@ -116,14 +116,13 @@ mfccs = torch.tensor(mfccs).unsqueeze(0).float()
 with torch.no_grad():
     output = model(mfccs)
 output_tensor, other_variable = output
-print(output)
+# print(output)
 prediction = output_tensor.argmax(dim=1)
 
 # Map the prediction to the corresponding emotion label
-emotion_labels = ['neutral', 'positive', 'negative']
+emotion_labels = ['positive', 'neutral', 'negative']
 emotion = emotion_labels[prediction]
 print(f'Predicted emotion: {emotion}')
-
 
 import os
 
@@ -131,4 +130,3 @@ file_path = 'recording.wav'
 
 if os.path.exists(file_path):
     os.remove(file_path)
-

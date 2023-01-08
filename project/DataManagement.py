@@ -3,10 +3,9 @@ from torch.utils.data import Dataset
 import numpy as np
 import torch
 import torchaudio
-
 import pandas as pd
 import matplotlib.pyplot as plt
-# import librosa
+
 # import librosa.display
 import warnings
 from sklearn.preprocessing import StandardScaler
@@ -15,7 +14,7 @@ from sklearn.decomposition import PCA
 from torchaudio import transforms
 
 from project import create_csv
-from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, BandStopFilter, Shift, Gain, RoomSimulator
+from audiomentations import Compose, AddGaussianNoise, TimeMask, PitchShift, Shift, Gain
 from sklearn.preprocessing import MinMaxScaler
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -26,7 +25,7 @@ augment = Compose([
 
 ])
 gaussianNoise = Compose([
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1),
+    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.0018, p=1/2),
 ])
 
 warnings.filterwarnings('ignore')  # matplot lib complains about librosa
@@ -34,12 +33,11 @@ warnings.filterwarnings('ignore')  # matplot lib complains about librosa
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print(device)
 bundle = torchaudio.pipelines.WAV2VEC2_BASE
-# bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
-# bundle = torchaudio.pipelines.WAV2VEC2_LARGE_LV60K
+
 model = bundle.get_model()
 sample_rate = bundle.sample_rate
-# ANNOTATIONS_FILE = 'Train_test_.csv'
-ANNOTATIONS_FILE = '8emotion.csv'
+ANNOTATIONS_FILE = 'Train_test_.csv'
+
 import torch
 from GPUtil import showUtilization as gpu_usage
 from numba import cuda
@@ -101,10 +99,8 @@ class DataManagement:
         return waveforms, emotions
 
     def split_data(self, waveforms, emotions):
-        """  """
-
-        # import cupy as cp
-
+        """@credit IliaZenkov
+         our changes split 70/20/10 """
         # lists that will contain data extracted from signals
         X_train, X_valid, X_test = [], [], []
         # lists that will contain labels extracted from CSV
@@ -130,10 +126,11 @@ class DataManagement:
             # store the length of emotion indexes list
             emotion_t_len = len(emotions_indexes)
 
-            # split and store all the emotion indexes for train/val/test as 80/10/10.
-            # train is 80% of data
+            # split and store all the emotion indexes for train/val/test as 70/20/10.
+            # train is 70% of data
+
             train_indexes = emotions_indexes[:int(0.70 * emotion_t_len)]
-            # validation is 80% - 90% of the data
+            # validation is 70% - 90% of the data
             val_indexes = emotions_indexes[int(0.7 * emotion_t_len): int(0.9 * emotion_t_len)]
             # test is 90% to 100% of the data
             test_indexes = emotions_indexes[int(0.9 * emotion_t_len):]
@@ -141,7 +138,6 @@ class DataManagement:
             """ For each X,Y train/val/test,
                 we add the correlated data from waveforms depend of the indexes we extracted before
                  """
-            # print(train_indexes, )
             X_train.append(waveforms_arr[train_indexes, :])
             Y_train.append(np.array([emotion_number] * len(train_indexes), dtype=np.int32))
 
@@ -171,12 +167,10 @@ class DataManagement:
 
     def augment_balanced_data(self, X_train, Y_train, augment_method):
 
-        # print("\n ---------------------- ")
-        # print(Y_train.size)
-        # print()
+
         # # Find the total number of instances of each class in the training set
         class_counts = Counter(Y_train)
-        # print("class_count", class_counts)
+
 
         # Initialize a dictionary to store the number of instances of each class to augment
         num_to_augment = {}
@@ -193,8 +187,6 @@ class DataManagement:
         for cls, count in num_to_augment.items():
             # Find the indices of the instances of this class
             indices = np.where(Y_train == cls)[0]
-            # print("Indices: ", indices)
-            # print(indices)
 
             # Randomly select the indices to augment
             to_augment = np.random.choice(indices, size=count, replace=False)
@@ -211,12 +203,7 @@ class DataManagement:
             # Add the augmented instances to the lists
             augmented_X.append(augmented_X_cls)
             augmented_Y.append(augmented_Y_cls)
-        # print("augmented_Y[0]: ", augmented_Y[0].__len__())
-        # print("augmented_Y[1]: ", augmented_Y[1].__len__())
-        # print("augmented_Y[2]: ", augmented_Y[2].__len__())
-        # print("total aug_Y: ", augmented_Y[0].__len__() + augmented_Y[1].__len__() + augmented_Y[2].__len__())
 
-        # Concatenate the augmented instances with the rest of the training set
         # Concatenate the augmented instances with the rest of the training set
         augmented_X = np.array(augmented_X)
         #
@@ -239,26 +226,7 @@ class DataManagement:
                      # hop=256, # increases # of time steps; was not helpful
                      mels=128
                      ):
-
-        # win_length = None
-        # hop_length = 512
-        #
-        # n_mfcc = 256
-        #
-        # mfcc_transform = transforms.MFCC(
-        #     sample_rate=sample_rate,
-        #     n_mfcc=n_mfcc,
-        #     window= winlen,
-        #     melkwargs={
-        #         "n_fft": fft,
-        #         "n_mels": mels,
-        #         "hop_length": hop_length,
-        #         "mel_scale": "htk",
-        #     },
-        # )
-        #
-        # mfcc = mfcc_transform(SPEECH_WAVEFORM)
-
+        """@credit IliaZenkov """
         # Compute the MFCCs for all STFT frames
         # 40 mel filterbanks (n_mfcc) = 40 coefficients
         mfc_coefficients = librosa.feature.mfcc(
@@ -275,26 +243,11 @@ class DataManagement:
 
         return mfc_coefficients
 
-    def get_features(self, waveforms, features, samplerate):
 
-        # initialize counter to track progress
-        file_count = 0
-
-        # process each waveform individually to get its MFCCs
-        for waveform in waveforms:
-            mfccs = self.feature_mfcc(waveform, sample_rate)
-            features.append(mfccs)
-            file_count += 1
-            # print progress
-            print('\r' + f' Processed {file_count}/{len(waveforms)} waveforms', end='')
-
-        # return all features from list of waveforms
-        return features
 
     def feature_extraction(self, x_waveforms):
 
-        # print("\n type ",
-        # type(x_waveforms), "- \n", x_waveforms)
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(device)
         model.to(device)
@@ -313,11 +266,6 @@ class DataManagement:
             features.append(mfccs)
             print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
             file_count += 1
-            # with torch.inference_mode():
-            #     feat, _ = model.extract_features(wave_tensor)
-            #     features.append(feat.detach())
-            #     print('\r' + f' Processed {file_count}/{len(x_waveforms)} Feature waveforms', end='')
-            #     file_count += 1
             # with torch.inference_mode():
             #     emission, _ = model(wave_tensor)
             #     features.append(emission.detach())
@@ -352,6 +300,8 @@ class DataManagement:
             first we take each waveform with the shifted 0.5 first sec, and then the total 3 second long further.
             Now each sample have same length.
             """
+
+        """@credit IliaZenkov """
         # half_sec = int(0.5 * sr)  # shift 0.5 sec
         half_sec = int(0 * sr)
         wave = np.array(waveform[0].cpu().numpy())
@@ -361,15 +311,14 @@ class DataManagement:
         return waveform_homo
 
     def tensor_4D(self, X_, features, Y, boo):
-
+        """@credit IliaZenkov
+         our changes feature scaling"""
         # X_ = self.apply_pca(X_)
 
         if boo:
             scaler = StandardScaler()
             X_ = scaler.fit_transform(X_)
         # X_ = X_
-        # print()
-        # print(X.shape)
 
         # wav2vec transformer
         # X_ = np.stack([np.expand_dims(t.cpu().numpy(), axis=0) for t in features], axis=0)
@@ -385,17 +334,6 @@ class DataManagement:
         # print(Y)
         return X_, Y
 
-    def feature_Scaling(self, X_train):
-        scaler = StandardScaler()
-
-        N, C, H, W = X_train.shape
-
-        X_train = np.reshape(X_train, (N, -1))
-        X_train = scaler.fit_transform(X_train)
-
-        # Transform back to NxCxHxW 4D tensor format
-        X_train = np.reshape(X_train, (N, C, H, W))
-        return X_train
 
     def plot_emission(self, emission):
         # plot the classification results
@@ -439,7 +377,7 @@ class DataManagement:
         # load the data from csv
         waveforms, emotions = self.load_data()
 
-        # split to train/validation /test # retuen tuple of (x,y) for each
+        # split to train/validation /test # return tuple of (x,y) for each
         train_XY, valid_XY, test_XY = self.split_data(waveforms, emotions)
 
         train_X = train_XY[0]
@@ -451,19 +389,14 @@ class DataManagement:
         test_Y = test_XY[1]
 
         # augment data
-        train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
+        #train_X, train_Y = self.augment_balanced_data(train_X, train_Y, augment)
         #train_X, train_Y = self.augment_balanced_data(train_X, train_Y, gaussianNoise)
 
-        ##extraction the feature
+        # extraction the feature
         print("train_X.size ", train_X.shape)
         features_train_X = self.feature_extraction(train_X)
         features_valid_X = self.feature_extraction(valid_X)
         features_test_X = self.feature_extraction(test_X)
-
-        # self.pca = self.apply_pca(features_train_X, 0.9)  # Fit a PCA model to the training data
-        # train_X = self.pca.transform(features_train_X)  # Transform the training data using the PCA model
-        # valid_X = self.pca.transform(features_valid_X)  # Transform the validation data using the PCA model
-        # test_X = self.pca.transform(features_test_X)  # Transform the test data using the PCA model
 
         train_X, train_Y = self.tensor_4D(train_X, features_train_X, train_Y, True)
         valid_X, valid_Y = self.tensor_4D(valid_X, features_valid_X, valid_Y, True)
@@ -471,12 +404,6 @@ class DataManagement:
         print("train_X.size ", train_X.shape)
 
         del features_train_X, features_valid_X, features_test_X
-
-        # train_X = self.feature_Scaling(train_X)
-        # valid_X = self.feature_Scaling(valid_X)
-        # test_X = self.feature_Scaling(test_X)
-        #
-        #
 
         return train_X, train_Y, valid_X, valid_Y, test_X, test_Y
 
@@ -498,25 +425,3 @@ class DataManagement:
 if __name__ == '__main__':
     dm = DataManagement()
     dm.get()
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #
-    # # Load the audio data
-    # waveform, sample_rate = torchaudio.load(
-    #     'C:/Users/97252/Documents/GitHub/speech-emotion-recognition/project/data/RAVDESS/Actor_01/03-01-01-01-01-01-01.wav')
-    # waveform = waveform.to(device)
-    #
-    # # Resample the data if necessary
-    # if sample_rate != torchaudio.pipelines.WAV2VEC2_BASE.sample_rate:
-    #     waveform = torchaudio.functional.resample(waveform, sample_rate,
-    #                                               torchaudio.pipelines.WAV2VEC2_BASE.sample_rate)
-    #
-    # # Extract the acoustic features
-    # model = torchaudio.pipelines.WAV2VEC2_BASE.get_model().to(device)
-    # output, class_log_probs = model(waveform)
-    #
-    # # Copy the output to host memory
-    # output = output.detach().cpu()
-    #
-    # # Plot the output as a spectrogram
-    # plt.imshow(output[0].T, origin='lower', aspect='auto')
-    # plt.show()

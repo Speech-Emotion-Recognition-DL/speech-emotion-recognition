@@ -12,6 +12,7 @@ DIMENSION = 512 * 300
 
 
 class Convolutional_Speaker_Identification(nn.Module):
+    """@credit Or Haim Anidjar"""
 
     def cal_paddind_shape(self, new_shape, old_shape, kernel_size, stride_size):
         return (stride_size * (new_shape - 1) + kernel_size - old_shape) / 2
@@ -48,7 +49,7 @@ class Convolutional_Speaker_Identification(nn.Module):
         self.dense_1 = nn.Linear(256, 256)
         self.drop_2 = nn.Dropout(p=DROP_OUT)
 
-        self.dense_2 = nn.Linear(256, 8)
+        self.dense_2 = nn.Linear(256, 3)
 
     def forward(self, X):
         # print(X.shape)
